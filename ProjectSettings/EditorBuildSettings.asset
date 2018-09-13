@@ -4,4 +4,10 @@
 EditorBuildSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 2
-  m_Scenes: []
+  m_Scenes:
+  - enabled: 1
+    path: Assets/scene/main.unity
+    guid: 0d943626aa3bb22429ba3410f8e6fdcb
+  - enabled: 1
+    path: Assets/scene/ui_fade.unity
+    guid: a055ed53d0cf668409738a75c9beec69

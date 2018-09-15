@@ -17,7 +17,7 @@ namespace nangka
             {
                 public bool CheckRule()
                 {
-                    Debug.Log("RuleDungeonToBattle.CheckRule()");
+                    //Debug.Log("RuleDungeonToBattle.CheckRule()");
 
                     return false;
                     // Boot Entity インタフェースの取得

@@ -55,8 +55,8 @@ namespace nangka
             // 初期化情報を残した状態でリセット
             public void Reset()
             {
-                Object.Destroy(this.objRoot, 0.1f); this.objRoot = null;
-                Object.Destroy(this.objCellRoot, 0.1f); this.objCellRoot = null;
+                if (this.objRoot != null) { Object.Destroy(this.objRoot); this.objRoot = null; }
+                if (this.objCellRoot != null) { Object.Destroy(this.objCellRoot); this.objCellRoot = null; }
             }
 
             // 初期化情報に基づいてダンジョン生成

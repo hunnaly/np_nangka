@@ -22,13 +22,6 @@ namespace nangka {
 
 
             //----------------------------------------------------------------
-            // シーン名
-            //----------------------------------------------------------------
-
-            public static string SCENE_NAME_FADE = "ui_fade";
-
-
-            //----------------------------------------------------------------
             // フェード処理簡易版
             // 注意：EntityFade が動作している必要がある
             //----------------------------------------------------------------
@@ -58,14 +51,6 @@ namespace nangka {
             // 登録中の各種 Entity を操作するためのインタフェースを取得
             //----------------------------------------------------------------
 
-            // Fadeインタフェースを取得する
-            public static string ENTITY_CNAME_FADE = "nangka.entity.EntityFade";
-            public static IEntityFade GetIEntityFade() { return GetInterface<EntityFade, IEntityFade>(ENTITY_CNAME_FADE); }
-
-            // Dungeonインタフェースを取得する
-            public static string ENTITY_CNAME_DUNGEON = "nangka.entity.EntityDungeon";
-            public static IEntityDungeon GetIEntityDungeon() { return GetInterface<EntityDungeon, IEntityDungeon>(ENTITY_CNAME_DUNGEON); }
-
             // インタフェースを取得する（非公開）
             private static U GetInterface<T, U>(string className)
                 where T : class, U
@@ -75,6 +60,11 @@ namespace nangka {
                 U iEntity = (entity == null) ? null : entity.GetInterface<T, U>();
                 return iEntity;
             }
+
+            // 各Entityインタフェースを取得する
+            public static IEntityFade GetIEntityFade() { return GetInterface<EntityFade, IEntityFade>(Define.ENTITY_CNAME_FADE); }
+            public static IEntityDungeon GetIEntityDungeon() { return GetInterface<EntityDungeon, IEntityDungeon>(Define.ENTITY_CNAME_DUNGEON); }
+
         }
 
     } //namespace utility

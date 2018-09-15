@@ -153,9 +153,9 @@ namespace nangka {
 
             private IEnumerator LoadSceneUIFade()
             {
-                yield return SceneManager.LoadSceneAsync(Utility.SCENE_NAME_FADE, LoadSceneMode.Additive);
+                yield return SceneManager.LoadSceneAsync(Define.SCENE_NAME_FADE, LoadSceneMode.Additive);
 
-                var scene = SceneManager.GetSceneByName(Utility.SCENE_NAME_FADE);
+                var scene = SceneManager.GetSceneByName(Define.SCENE_NAME_FADE);
                 var canvas = scene.GetRootGameObjects().First(obj => obj.GetComponent<Canvas>() != null).GetComponent<Canvas>();
                 var component = canvas.GetComponent<ui>();
                 var objPanel = component.objectTable[0];
@@ -175,7 +175,7 @@ namespace nangka {
 
             private IEnumerator UnloadSceneUIFade()
             {
-                yield return SceneManager.UnloadSceneAsync("ui_fade");
+                yield return SceneManager.UnloadSceneAsync(Define.SCENE_NAME_FADE);
 
                 this.fadePanel = null;
                 this.bUnloading = false;

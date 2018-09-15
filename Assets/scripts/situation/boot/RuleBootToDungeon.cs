@@ -4,7 +4,7 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using np;
 using nangka.entity;
-//using nangka.situation.dungeon;
+using nangka.situation.dungeon;
 using nangka.utility;
 
 namespace nangka {
@@ -28,14 +28,12 @@ namespace nangka {
                 private IEnumerator ReadyDungeon()
                 {
                     yield return null;
-                    // ダンジョンシーンのロード
-                    //yield return SceneManager.LoadSceneAsync(Utility.SCENE_NAME_BTLFIELD, LoadSceneMode.Additive);
 
                     // Dungeon Entity の登録
-                    //Global.Instance.EntityCtrl.CreateAndRegist<EntityBattle>();
+                    Global.Instance.EntityCtrl.CreateAndRegist<EntityDungeon>();
 
                     // 次の Situation を登録
-                    //this.nextSituation = NpSituation.Create<SituationDungeon>();
+                    this.nextSituation = NpSituation.Create<SituationDungeon>();
                 }
             }
 

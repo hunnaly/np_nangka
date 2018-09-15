@@ -11,6 +11,9 @@ namespace nangka {
     namespace entity
     {
 
+        //------------------------------------------------------------------
+        // IEntityFade
+        //------------------------------------------------------------------
         public interface IEntityFade
         {
             bool IsValid();
@@ -19,8 +22,13 @@ namespace nangka {
             void FadeIn(float time = 1.0f, bool bAutoActivateOff = true);
             bool IsDoing();
             void Terminate();
-        }
 
+        } //interface IEntityFade
+
+
+        //------------------------------------------------------------------
+        // EntityFade
+        //------------------------------------------------------------------
         public class EntityFade : NpEntity, IEntityFade
         {
             private bool bValid = false;

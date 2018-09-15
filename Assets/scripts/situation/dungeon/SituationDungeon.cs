@@ -1,16 +1,19 @@
 ﻿using UnityEngine;
 using np;
 
-namespace nangka {
-    namespace situation {
-        namespace boot
+namespace nangka
+{
+    namespace situation
+    {
+        namespace dungeon
         {
-            public class SituationBoot : NpSituation
+
+            public class SituationDungeon : NpSituation
             {
                 protected override bool CreateRules()
                 {
-                    Debug.Log("SituationBoot.CreateRules()");
-                    INpRule rule = this.CreateRule<RuleBootToDungeon>();
+                    Debug.Log("SituationDungeon.CreateRules()");
+                    INpRule rule = this.CreateRule<RuleDungeonToBattle>();
                     return (rule != null);
                 }
 

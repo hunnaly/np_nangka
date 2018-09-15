@@ -29,12 +29,42 @@ namespace nangka {
 
 
             //----------------------------------------------------------------
+            // フェード処理簡易版
+            // 注意：EntityFade が動作している必要がある
+            //----------------------------------------------------------------
+
+            public static IEnumerator FadeIn()
+            {
+                IEntityFade iEntityFade = GetIEntityFade();
+                iEntityFade.FadeIn();
+
+                // フェードイン完了待ち
+                while (iEntityFade.IsDoing()) yield return null;
+                yield return null;
+            }
+
+            public static IEnumerator FadeOut(float target)
+            {
+                IEntityFade iEntityFade = Utility.GetIEntityFade();
+                iEntityFade.FadeOut(target);
+
+                // フェードアウト完了待ち
+                while (iEntityFade.IsDoing()) yield return null;
+                yield return null;
+            }
+
+
+            //----------------------------------------------------------------
             // 登録中の各種 Entity を操作するためのインタフェースを取得
             //----------------------------------------------------------------
 
             // Fadeインタフェースを取得する
             public static string ENTITY_CNAME_FADE = "nangka.entity.EntityFade";
             public static IEntityFade GetIEntityFade() { return GetInterface<EntityFade, IEntityFade>(ENTITY_CNAME_FADE); }
+
+            // Dungeonインタフェースを取得する
+            public static string ENTITY_CNAME_DUNGEON = "nangka.entity.EntityDungeon";
+            public static IEntityDungeon GetIEntityDungeon() { return GetInterface<EntityDungeon, IEntityDungeon>(ENTITY_CNAME_DUNGEON); }
 
             // インタフェースを取得する（非公開）
             private static U GetInterface<T, U>(string className)

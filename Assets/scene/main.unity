@@ -59,7 +59,7 @@ LightmapSettings:
     m_Resolution: 2
     m_BakeResolution: 40
     m_AtlasSize: 1024
-    m_AO: 0
+    m_AO: 1
     m_AOMaxDistance: 1
     m_CompAOExponent: 1
     m_CompAOExponentDirect: 0
@@ -319,7 +319,7 @@ Behaviour:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInternal: {fileID: 0}
   m_GameObject: {fileID: 2067501302}
-  m_Enabled: 1
+  m_Enabled: 0
 --- !u!20 &2067501305
 Camera:
   m_ObjectHideFlags: 0
@@ -336,10 +336,10 @@ Camera:
   m_FocalLength: 50
   m_NormalizedViewPortRect:
     serializedVersion: 2
-    x: 0.06
-    y: 0.35
-    width: 0.45
-    height: 0.6
+    x: 0.08
+    y: 0.419
+    width: 0.381
+    height: 0.514
   near clip plane: 0.3
   far clip plane: 1000
   field of view: 100

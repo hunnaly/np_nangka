@@ -5,6 +5,12 @@ namespace nangka {
     public sealed class Define
     {
         //----------------------------------------------------------------
+        // パラメータ
+        //----------------------------------------------------------------
+        public static int SHOWABLE_BLOCK = 2;
+
+
+        //----------------------------------------------------------------
         // シーン名
         //----------------------------------------------------------------
         public static string SCENE_NAME_FADE = "ui_fade";
@@ -21,13 +27,21 @@ namespace nangka {
         // Prefabパス名
         //----------------------------------------------------------------
         public static string RES_PATH_PREFAB_WALL = "Prefabs/Wall";
-        
+
+
+        //----------------------------------------------------------------
+        // Textureパス名
+        //----------------------------------------------------------------
+        public static string RES_PATH_TEXTURE_WALL_BRICK_CEILING = "Textures/block02";
+        public static string RES_PATH_TEXTURE_WALL_BRICK_SIDEWALK = "Textures/block02";
+        public static string RES_PATH_TEXTURE_WALL_BRICK_SIDEWALL = "Textures/block01";
+
 
         //----------------------------------------------------------------
         // Object名
         //----------------------------------------------------------------
         public static string OBJ_NAME_DUNGEON_ROOT = "Dungeon";
-        public static string OBJ_NAME_DUNGEON_CELL_ROOT = "Cell_";
+        public static string OBJ_NAME_DUNGEON_BLOCK_ROOT = "Block_";
 
     } //class Define
 

@@ -1,4 +1,4 @@
-﻿Shader "Unlit/UnlitCulOffShader"
+﻿Shader "Unlit/UnliteCulOn"
 {
 	Properties
 	{
@@ -6,9 +6,8 @@
 	}
 	SubShader
 	{
-		Tags { "RenderType"="Transparent" "Queue"="Transparent" }
+		Tags{ "RenderType" = "Transparent" "Queue" = "Transparent" }
 		LOD 100
-		Cull off
 		Blend SrcAlpha OneMinusSrcAlpha
 
 		Pass

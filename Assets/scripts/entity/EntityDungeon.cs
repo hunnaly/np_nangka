@@ -281,7 +281,7 @@ namespace nangka
             {
                 GameObject objWall = (GameObject)Object.Instantiate(this.refPrefabPlane, trans, rote);
                 objWall.transform.SetParent(parent.transform, false);
-                //objWall.SetActive(false);
+                objWall.SetActive(false);
                 return objWall;
             }
 
@@ -556,8 +556,10 @@ namespace nangka
             // 初期化情報を残した状態でリセット
             public void Reset()
             {
-                if (this.texWallCeiling != null) { Object.Destroy(this.texWallCeiling); this.texWallCeiling = null; }
-                if (this.texWallSideWall != null) { Object.Destroy(this.texWallSideWall); this.texWallSideWall = null; }
+                if (this.refStructure != null) this.refStructure.Clear();
+
+                if (this.texWallCeiling != null) { Resources.UnloadAsset(this.texWallCeiling); this.texWallCeiling = null; }
+                if (this.texWallSideWall != null) { Resources.UnloadAsset(this.texWallSideWall); this.texWallSideWall = null; }
                 this.refTexWallSideWalk = null;
             }
 
@@ -571,7 +573,7 @@ namespace nangka
             }
 
             // 初期化情報に基づいてダンジョン生成
-            // TODO: キャラクター位置を引数でとるべし！
+            // TODO: キャラクター位置と向きを引数でとるべし！
             public void Create()
             {
                 if (!this.bValid) return;
@@ -579,7 +581,9 @@ namespace nangka
                 this.refStructure.Ready(Define.SHOWABLE_BLOCK);
 
 
-                //TODO: キャラクター位置とマップ情報から壁情報を変更する
+                //TODO: キャラクター位置と向きとマップ情報から壁情報を変更する
+
+                // キャラクター位置
 
             }
 

@@ -27,6 +27,13 @@ namespace nangka {
 
                 private IEnumerator ReadyDungeon()
                 {
+                    // Frame 制御 Entity を登録
+                    // 有効な状態になるまで待つ
+                    Global.Instance.EntityCtrl.CreateAndRegist<EntityFrame>();
+                    IEntityFrame iEntityFrame = null;
+                    while ((iEntityFrame = Utility.GetIEntityFrame()) == null) yield return null;
+                    while (iEntityFrame.IsInitialized() == false) yield return null;
+
                     // TextureResources Entity の登録
                     Global.Instance.EntityCtrl.CreateAndRegist<EntityTextureResources>();
 

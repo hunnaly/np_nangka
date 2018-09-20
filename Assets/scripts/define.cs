@@ -14,6 +14,7 @@ namespace nangka {
         // シーン名
         //----------------------------------------------------------------
         public static string SCENE_NAME_FADE = "ui_fade";
+        public static string SCENE_NAME_FRAME = "ui_frame";
 
 
         //----------------------------------------------------------------
@@ -23,6 +24,7 @@ namespace nangka {
         public static string ENTITY_CNAME_FADE = ENTITY_PATH + "EntityFade";
         public static string ENTITY_CNAME_DUNGEON = ENTITY_PATH + "EntityDungeon";
         public static string ENTITY_CNAME_TEXTURE_RESOURCES = ENTITY_PATH + "EntityTextureResources";
+        public static string ENTITY_CNAME_FRAME = ENTITY_PATH + "EntityFrame";
 
 
         //----------------------------------------------------------------

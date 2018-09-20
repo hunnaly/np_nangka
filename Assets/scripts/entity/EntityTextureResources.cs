@@ -55,6 +55,7 @@ namespace nangka
 
             protected override bool TerminateProc()
             {
+                this.bInitialized = false;
                 return true;
             }
 

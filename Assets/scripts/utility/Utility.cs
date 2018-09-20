@@ -65,6 +65,7 @@ namespace nangka {
             public static IEntityFade GetIEntityFade() { return GetInterface<EntityFade, IEntityFade>(Define.ENTITY_CNAME_FADE); }
             public static IEntityDungeon GetIEntityDungeon() { return GetInterface<EntityDungeon, IEntityDungeon>(Define.ENTITY_CNAME_DUNGEON); }
             public static IEntityTextureResources GetIEntityTextureResources() { return GetInterface<EntityTextureResources, IEntityTextureResources>(Define.ENTITY_CNAME_TEXTURE_RESOURCES); }
+            public static IEntityFrame GetIEntityFrame() { return GetInterface<EntityFrame, IEntityFrame>(Define.ENTITY_CNAME_FRAME); }
 
         }
 

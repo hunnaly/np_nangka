@@ -7,7 +7,7 @@ namespace nangka {
         //----------------------------------------------------------------
         // パラメータ
         //----------------------------------------------------------------
-        public static int SHOWABLE_BLOCK = 2;
+        public static int SHOWABLE_BLOCK = 3;
 
 
         //----------------------------------------------------------------
@@ -19,8 +19,10 @@ namespace nangka {
         //----------------------------------------------------------------
         // Entity クラス名
         //----------------------------------------------------------------
-        public static string ENTITY_CNAME_FADE = "nangka.entity.EntityFade";
-        public static string ENTITY_CNAME_DUNGEON = "nangka.entity.EntityDungeon";
+        private static string ENTITY_PATH = "nangka.entity.";
+        public static string ENTITY_CNAME_FADE = ENTITY_PATH + "EntityFade";
+        public static string ENTITY_CNAME_DUNGEON = ENTITY_PATH + "EntityDungeon";
+        public static string ENTITY_CNAME_TEXTURE_RESOURCES = ENTITY_PATH + "EntityTextureResources";
 
 
         //----------------------------------------------------------------

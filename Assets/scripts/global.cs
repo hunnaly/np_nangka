@@ -12,6 +12,11 @@ namespace nangka {
         // Gloabl インスタンス
         private static Global instance = new Global();
 
+        // PlayerCamera
+        private Camera _cameraPlayer = null;
+        public Camera cameraPlayer { get { return this._cameraPlayer; } }
+        public void SetPlayerCamera(Camera camera) { this._cameraPlayer = camera; }
+
 
         // 共有参照データ
         private INpEntityController entityController = null;

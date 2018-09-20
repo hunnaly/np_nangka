@@ -31,7 +31,7 @@ namespace nangka {
         //------------------------------------------------------------------
         public class EntityFade : NpEntity, IEntityFade
         {
-            private bool bValid = false;
+            private bool bInitialized = false;
             private bool bUnloading = false;
 
             private bool bDoingFade = false;
@@ -53,7 +53,7 @@ namespace nangka {
             protected override bool UpdateProc()
             {
                 // ui_fade のロードが完了していなければ何もせず完了を待つ
-                if (this.bValid == false) return false;
+                if (this.bInitialized == false) return false;
 
                 // フェード処理が設定されているときに処理を行う
                 if (this.IsDoing())
@@ -85,10 +85,10 @@ namespace nangka {
 
             protected override bool TerminateProc()
             {
-                if (this.bValid)
+                if (this.bInitialized)
                 {
                     this.Activate(false);
-                    this.bValid = false;
+                    this.bInitialized = false;
                     this.bUnloading = true;
                     Utility.StartCoroutine(this.UnloadSceneUIFade());
                 }
@@ -105,7 +105,7 @@ namespace nangka {
             }
 
 
-            public bool IsValid() { return this.bValid; }
+            public bool IsValid() { return this.bInitialized; }
 
             public void Activate(bool enabled)
             {
@@ -135,7 +135,7 @@ namespace nangka {
 
                 // ノータイムで反映させるときはこのタイミングでフェード処理を完了させるが
                 // シーンのロードが完了していないときは Update に処理を委ねる
-                if (this.bValid)
+                if (this.bInitialized)
                 {
                     this.Activate(true);
 
@@ -164,7 +164,7 @@ namespace nangka {
                 {
                     this.fadePanel = objPanel.GetComponent<Image>();
                     this.fadePanel.enabled = false;
-                    this.bValid = (this.fadePanel != null);
+                    this.bInitialized = (this.fadePanel != null);
 
                     this.fRed = this.fadePanel.color.r;
                     this.fGreen = this.fadePanel.color.g;

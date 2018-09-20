@@ -27,13 +27,16 @@ namespace nangka {
 
                 private IEnumerator ReadyDungeon()
                 {
-                    yield return null;
+                    // TextureResources Entity の登録
+                    Global.Instance.EntityCtrl.CreateAndRegist<EntityTextureResources>();
 
                     // Dungeon Entity の登録
                     Global.Instance.EntityCtrl.CreateAndRegist<EntityDungeon>();
 
                     // 次の Situation を登録
-                    this.nextSituation = NpSituation.Create<SituationDungeon>();
+                    this.nextSituation = NpSituation.Create<SituationDungeon>();                    
+
+                    yield return null;
                 }
             }
 

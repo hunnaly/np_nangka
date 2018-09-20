@@ -960,22 +960,38 @@ namespace nangka
         {
             private bool bValid = false;
             private bool bReady = false;
+            private bool bPaused = false;
 
             private int _x = 0;
             private int _y = 0;
             private Direction _dir = 0;
-            private bool _bMovable = false;
             private Camera camera = null;
+
+            private bool bMoving = false;
+            private int moveCount = 0;
+            private Direction moveDir = 0;
+            private float fCameraX = 0.0f;
+            private float fCameraY = 0.0f;
+            private float fCameraZ = 0.0f;
+            private float[] tableMoveDelta = { 2.0f, 1.0f, 0.5f, 0.25f, 0.25f };
+
+            private bool bRotating = false;
+            private int rotCount = 0;
+            private float fAngle = 0.0f;
+            private bool bRotMinus = false;
+            private float[] tableRotDelta = { 40,0f, 20.0f, 15.0f, 10.0f, 5.0f };
 
 
             public int x { get { return this._x; } }
             public int y { get { return this._y; } }
             public Direction dir { get { return this._dir; } }
-            public bool bMovable { get { return this._bMovable; } }
+            public void Pause(bool b) { this.bPaused = b; }
 
             public bool IsValid() { return this.bValid; }
             public bool IsReady() { return this.bReady; }
-            public void Movable(bool vMovable) { this._bMovable = bMovable; }
+            public bool IsPaused() { return this.bPaused; }
+            public bool IsMoving() { return this.bMoving; }
+            public bool IsRotating() { return this.bRotating; }
 
 
             // 初期化
@@ -994,7 +1010,23 @@ namespace nangka
 
                 this._x = x;
                 this._y = y;
-                this.Rotate(this._dir);
+                this.SetCameraDirection(dir);
+                this.bPaused = false;
+
+                Vector3 pos = this.camera.transform.position;
+                this.fCameraX = pos.x;
+                this.fCameraY = pos.y;
+                this.fCameraZ = pos.z;
+
+                this.bMoving = false;
+                this.moveCount = 0;
+                this.moveDir = 0;
+
+                this.bRotating = false;
+                this.rotCount = 0;
+                this.bRotMinus = false;
+                this.fAngle = 0.0f;
+
                 this.bReady = true;
             }
 
@@ -1006,7 +1038,22 @@ namespace nangka
                 this._x = 0;
                 this._y = 0;
                 this._dir = 0;
-                this._bMovable = false;
+                this.bPaused = false;
+
+                this.bMoving = false;
+                this.moveCount = 0;
+                this.moveDir = 0;
+                this.fCameraX = 0.0f;
+                this.fCameraY = 0.0f;
+                this.fCameraZ = 0.0f;
+                this.SetCameraPos(this.fCameraX, this.fCameraY, this.fCameraZ);
+
+                this.bRotating = false;
+                this.rotCount = 0;
+                this.bRotMinus = false;
+                this.fAngle = 0.0f;
+                this.SetCameraAngleY(this.fAngle);
+
                 this.bReady = false;
             }
 
@@ -1019,10 +1066,183 @@ namespace nangka
                 this.bValid = false;
             }
 
+            public void Update()
+            {
+                if (!this.IsReady()) return;
+                if (this.IsPaused()) return;
+
+                this.MoveProc();
+                this.RotateProc();
+            }
+
             public void Rotate(Direction dir)
             {
+                if (!this.IsReady()) return;
+                if (this.IsMoving() || this.IsRotating()) return;
+
+                this.SetCameraDirection(dir);
+            }
+
+            public void RotateRight()
+            {
+                if (!this.IsReady()) return;
+                if (this.IsMoving() || this.IsRotating()) return;
+
+                this.fAngle = this.DirectionToAngleY(this._dir);
+                this._dir = this.DirectionRight(this._dir);
+
+                this.bRotMinus = false;
+                this.rotCount = 0;
+                this.bRotating = true;
+            }
+
+            public void RotateLeft()
+            {
+                if (!this.IsReady()) return;
+                if (this.IsMoving() || this.IsRotating()) return;
+
+                this.fAngle = this.DirectionToAngleY(this._dir);
+                this._dir = this.DirectionLeft(this._dir);
+
+                this.bRotMinus = true;
+                this.rotCount = 0;
+                this.bRotating = true;
+            }
+
+            public void MoveFront()
+            {
+                if (!this.IsReady()) return;
+                if (this.IsMoving() || this.IsRotating()) return;
+
+                this.moveDir = this._dir;
+                this.moveCount = 0;
+                this.bMoving = true;
+            }
+
+            public void MoveBack()
+            {
+                if (!this.IsReady()) return;
+                if (this.IsMoving() || this.IsRotating()) return;
+
+                switch (this._dir)
+                {
+                    case Direction.NORTH: this.moveDir = Direction.SOUTH; break;
+                    case Direction.SOUTH: this.moveDir = Direction.NORTH; break;
+                    case Direction.WEST: this.moveDir = Direction.EAST; break;
+                    case Direction.EAST: this.moveDir = Direction.WEST; break;
+                    default: break;
+                }
+                this.moveCount = 0;
+                this.bMoving = true;
+            }
+
+
+            private void MoveProc()
+            {
+                if (!this.bMoving) return;
+
+                float delta = this.tableMoveDelta[this.moveCount];
+                switch (this.moveDir)
+                {
+                    case Direction.NORTH: this.fCameraZ += delta; break;
+                    case Direction.SOUTH: this.fCameraZ -= delta; break;
+                    case Direction.WEST: this.fCameraX -= delta; break;
+                    case Direction.EAST: this.fCameraX += delta; break;
+                    default: break;
+                }
+                this.SetCameraPos(this.fCameraX, this.fCameraY, this.fCameraZ);
+
+                if (++this.moveCount >= this.tableMoveDelta.Length)
+                {
+                    this.moveCount = 0;
+                    this.bMoving = false;
+                }
+            }
+
+            private void RotateProc()
+            {
+                if (!this.IsRotating()) return;
+
+                float delta = this.tableRotDelta[this.rotCount];
+                this.fAngle += delta * (this.bRotMinus ? -1.0f : 1.0f);
+                this.SetCameraAngleY(this.fAngle);
+
+                if (++this.rotCount >= this.tableRotDelta.Length)
+                {
+                    this.rotCount = 0;
+                    this.bRotating = false;
+                }
+            }
+
+            private void SetCameraPos(float x, float y, float z)
+            {
+                Vector3 pos = this.camera.transform.position;
+                pos.x = x;
+                pos.y = y;
+                pos.z = z;
+                this.camera.transform.position = pos;
+            }
+
+
+            private void SetCameraDirection(Direction dir)
+            {
                 this._dir = dir;
-                this.camera.transform.rotation = Quaternion.AngleAxis(90.0f, new Vector3(0.0f, 1.0f, 0.0f));
+
+                float angle = 0.0f;
+                switch (dir)
+                {
+                    case Direction.SOUTH: angle = 180.0f; break;
+                    case Direction.WEST: angle = -90.0f; break;
+                    case Direction.EAST: angle = 90.0f; break;
+                    default: break;
+                }
+                this.SetCameraAngleY(angle);
+            }
+
+            private void SetCameraAngleY(float angle)
+            {
+                this.camera.transform.rotation = Quaternion.AngleAxis(angle, new Vector3(0.0f, 1.0f, 0.0f));
+            }
+
+            private float DirectionToAngleY(Direction dir)
+            {
+                float angle = 0.0f;
+                switch (dir)
+                {
+                    case Direction.SOUTH: angle = 180.0f; break;
+                    case Direction.WEST: angle = -90.0f; break;
+                    case Direction.EAST: angle = 90.0f; break;
+                    default: break;
+                }
+                return angle;
+            }
+
+            private Direction DirectionRight(Direction dir)
+            {
+                Direction ret = dir;
+                switch (dir)
+                {
+                    case Direction.NORTH: ret = Direction.EAST; break;
+                    case Direction.SOUTH: ret = Direction.WEST; break;
+                    case Direction.WEST: ret = Direction.NORTH; break;
+                    case Direction.EAST: ret = Direction.SOUTH; break;
+                    default: break;
+                }
+                return ret;
+            }
+
+            private Direction DirectionLeft(Direction dir)
+            {
+                Direction ret = dir;
+                switch (dir)
+                {
+                    case Direction.NORTH: ret = Direction.WEST; break;
+                    case Direction.SOUTH: ret = Direction.EAST; break;
+                    case Direction.WEST: ret = Direction.SOUTH; break;
+                    case Direction.EAST: ret = Direction.NORTH; break;
+                    default: break;
+                }
+                return ret;
             }
 
         } //class Player
@@ -1056,6 +1276,11 @@ namespace nangka
             protected override bool UpdateProc()
             {
                 if (this.bInitialized == false) return false;
+
+                this.EventProc();
+
+                this.player.Update();
+
                 return false;
             }
 
@@ -1160,6 +1385,25 @@ namespace nangka
                 } while (false);
 
                 return this.builder;
+            }
+
+
+            //------------------------------------------------------------------
+            // イベント処理
+            //------------------------------------------------------------------
+
+            private void EventProc()
+            {
+                if (this.player.IsMoving() || this.player.IsRotating()) return;
+
+                if (Input.GetKeyDown(KeyCode.LeftArrow))
+                {
+                    this.player.RotateLeft();
+                }
+                else if (Input.GetKeyDown(KeyCode.RightArrow))
+                {
+                    this.player.RotateRight();
+                }
             }
 
         } //class EntityDungeon

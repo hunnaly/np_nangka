@@ -24,23 +24,6 @@ namespace nangka
 
 
         //------------------------------------------------------------------
-        // 方向
-        //------------------------------------------------------------------
-        public enum Direction : int
-        {
-            NORTH = 0,
-            EAST = 1,
-            SOUTH = 2,
-            WEST = 3,
-            PLANE_MAX = 4,
-            UP = 4,
-            DOWN = 5,
-            SOLID_MAX = 6
-
-        } //enum Direction
-
-
-        //------------------------------------------------------------------
         // DungeonStructure
         //------------------------------------------------------------------
         public class DungeonStructure
@@ -52,7 +35,7 @@ namespace nangka
                 public Block[] next = new Block[(int)Direction.PLANE_MAX];
             }
 
-            struct Marker
+            class Marker
             {
                 public Block start;
                 public Direction dir;
@@ -74,18 +57,7 @@ namespace nangka
             // 反対方向の取得
             private Direction GetOppositeDirection(Direction dir)
             {
-                Direction retDir = dir;
-                switch (dir)
-                {
-                    case Direction.NORTH: retDir = Direction.SOUTH; break;
-                    case Direction.SOUTH: retDir = Direction.NORTH; break;
-                    case Direction.EAST: retDir = Direction.WEST; break;
-                    case Direction.WEST: retDir = Direction.EAST; break;
-                    case Direction.UP: retDir = Direction.DOWN; break;
-                    case Direction.DOWN: retDir = Direction.UP; break;
-                    default: break;
-                }
-                return retDir;
+                return Utility.GetOppositeDirection(dir);
             }
 
             // 初期化
@@ -104,6 +76,11 @@ namespace nangka
                 if (this.IsReady()) return;
 
                 this.numSide = (showableBlockNum - 1) * 2 + 1;
+
+                for (int i=0; i< (int)Direction.PLANE_MAX; i++)
+                {
+                    this.marker[i] = new Marker();
+                }
 
                 this.objRoot = new GameObject(Define.OBJ_NAME_DUNGEON_ROOT);
                 this.Build();
@@ -194,6 +171,58 @@ namespace nangka
 
                 } while (false);
                 return block;
+            }
+
+            // 視覚化領域を指定方向に 1 ラインずらす
+            // ただしループさせただけなので、ずらした領域のブロックの情報を
+            // ChangeBlock などで別途書き換える必要がある。
+            public void Scroll(Direction dir)
+            {
+                this.ScrollCenter(dir);
+                this.ScrollMarker(dir);
+                this.TransformPositionByScroll(dir);
+            }
+
+            private void ScrollCenter(Direction dir)
+            {
+                this.center = this.center.next[(int)dir];
+            }
+
+            private void ScrollMarker(Direction dir)
+            {
+                Direction dirOpposite = this.GetOppositeDirection(dir);
+                int markerIdx = (int)dir;
+                int markerIdxOpposite = (int)dirOpposite;
+
+                this.marker[markerIdx].start = this.marker[markerIdx].start.next[(int)dir];
+                this.marker[markerIdxOpposite].start = this.marker[markerIdxOpposite].start.next[(int)dir];
+            }
+
+            private void TransformPositionByScroll(Direction dir)
+            {
+                Marker targetMarker = this.marker[(int)dir];
+
+                float diff = this.numSide * 4.0f;
+                Block start = targetMarker.start;
+                Block block = start, next = null;
+                do {
+                    next = block.next[(int)targetMarker.dir];
+
+                    Vector3 pos = block.root.transform.position;
+                    switch (dir)
+                    {
+                        case Direction.NORTH: pos.z += diff; break;
+                        case Direction.SOUTH: pos.z -= diff; break;
+                        case Direction.WEST: pos.x -= diff; break;
+                        case Direction.EAST: pos.x += diff; break;
+                        default: break;
+                    }
+                    block.root.transform.position = pos;
+
+                    if (next == start) break;
+                    block = next;
+                }
+                while (true);
             }
 
 
@@ -531,7 +560,7 @@ namespace nangka
             {
                 for (int i = 0; i < (int)Direction.PLANE_MAX; i++)
                 {
-                    this.marker[i].start = null;
+                    this.marker[i] = null;
                 }
             }
 
@@ -553,7 +582,7 @@ namespace nangka
         //------------------------------------------------------------------
         public class MapData
         {
-            public struct BlockData
+            public class BlockData
             {
                 // Direction.SOLID_MAX 個のテクスチャIDを格納する
                 // 各 Map ごとに 256種類まで利用可能
@@ -714,6 +743,7 @@ namespace nangka
                 this.tableData = new BlockData[num];
                 for (int i = 0; i < num; i++)
                 {
+                    this.tableData[i] = new BlockData();
                     this.tableData[i].idTip = new byte[(int)Direction.SOLID_MAX];
                     this.tableData[i].collision = 0;
                 }
@@ -743,7 +773,7 @@ namespace nangka
                 this.DSetBlock(this.tableData[4], 2, 0, 2, 0, 1, 1, true, false, true, false);
                 this.DSetBlock(this.tableData[5], 2, 0, 2, 0, 1, 1, true, false, true, false);
                 this.DSetBlock(this.tableData[6], 2, 0, 2, 0, 1, 1, true, false, true, false);
-                this.DSetBlock(this.tableData[7], 2, 2, 2, 0, 1, 1, true, true, true, false);
+                this.DSetBlock(this.tableData[7], 2, 2, 0, 0, 1, 1, true, true, false, false);
 
                 this.DSetBlock(this.tableData[8], 2, 2, 0, 2, 1, 1, true, true, false, true);
                 this.DSetBlock(this.tableData[9], 2, 2, 0, 2, 1, 1, true, true, false, true);
@@ -807,6 +837,8 @@ namespace nangka
                 this.DSetBlock(this.tableData[61], 2, 0, 2, 0, 1, 1, true, false, true, false);
                 this.DSetBlock(this.tableData[62], 2, 0, 2, 0, 1, 1, true, false, true, false);
                 this.DSetBlock(this.tableData[63], 0, 2, 2, 0, 1, 1, false, true, true, false);
+
+                Debug.Log("collision(0x0):"+ this.tableData[0].collision);
             }
             private void DSetBlock(BlockData data,
                 byte n, byte e, byte s, byte w, byte u, byte d,
@@ -827,10 +859,10 @@ namespace nangka
             private void DSetCollision(BlockData data, bool n, bool e, bool s, bool w)
             {
                 uint flag = 0;
-                if (n) flag |= 1 << (int)Direction.NORTH;
-                if (e) flag |= 1 << (int)Direction.EAST;
-                if (s) flag |= 1 << (int)Direction.SOUTH;
-                if (w) flag |= 1 << (int)Direction.WEST;
+                if (n) flag |= (1 << (int)Direction.NORTH);
+                if (e) flag |= (1 << (int)Direction.EAST);
+                if (s) flag |= (1 << (int)Direction.SOUTH);
+                if (w) flag |= (1 << (int)Direction.WEST);
                 data.collision = flag;
             }
         }
@@ -843,6 +875,10 @@ namespace nangka
         {
             private bool bValid = false;
             private bool bReady = false;
+
+            private int curX = 0;
+            private int curY = 0;
+            private int showableBlockNum = 0;
 
             private DungeonStructure refStructure = null;
             private MapData refMapData = null;
@@ -899,21 +935,26 @@ namespace nangka
 
             // ダンジョン生成
             // 指定座標の周りを視覚化
-            public void Create(int x, int y)
+            public void Create(int x, int y, int num)
             {
                 if (!this.IsReady()) return;
 
+                this.curX = x;
+                this.curY = y;
+                this.showableBlockNum = num;
+
                 this.refMapData.Ready();
                 
-                this.refStructure.Ready(Define.SHOWABLE_BLOCK);
+                this.refStructure.Ready(this.showableBlockNum);
 
-                int temp = Define.SHOWABLE_BLOCK - 1;
+                int temp = this.showableBlockNum - 1;
                 int startOfstX = temp * -1;
                 int startOfstY = temp * -1;
                 int endOfstX = temp;
                 int endOfstY = temp;
                 this.DesignateRect(
-                    x + startOfstX, y + startOfstY, x + endOfstX, y + endOfstY,
+                    this.curX + startOfstX, this.curY + startOfstY,
+                    this.curX + endOfstX, this.curY + endOfstY,
                     startOfstX, startOfstY);
             }
 
@@ -950,6 +991,58 @@ namespace nangka
                 }
             }
 
+            // 指定方向に進めるかチェックし、
+            // 進めるなら指定方向に 1 ライン分視覚化領域をずらす
+            public bool CheckMoveAndScroll(Direction dir)
+            {
+                bool b = this.refMapData.IsMovable(this.curX, this.curY, dir);
+                if (b) this.Scroll(dir);
+                return b;
+            }
+
+            // 指定方向に 1 ライン分視覚化領域をずらす
+            public void Scroll(Direction dir)
+            {
+                this.refStructure.Scroll(dir);
+
+                int temp = this.showableBlockNum - 1;
+                int sx = 0, sy = 0, ex = 0, ey = 0, vx = 0, vy = 0;
+                switch (dir)
+                {
+                    case Direction.NORTH:
+                        --this.curY;
+                        sx = this.curX - temp; sy = this.curY - temp;
+                        ex = this.curX + temp; ey = sy;
+                        vx = -temp; vy = -temp;
+                        break;
+
+                    case Direction.SOUTH:
+                        ++this.curY;
+                        sx = this.curX - temp; sy = this.curY + temp;
+                        ex = this.curX + temp; ey = sy;
+                        vx = -temp; vy = temp;
+                        break;
+
+                    case Direction.WEST:
+                        --this.curX;
+                        sx = this.curX - temp; sy = this.curY - temp;
+                        ex = sx; ey = this.curY + temp;
+                        vx = -temp; vy = -temp;
+                        break;
+
+                    case Direction.EAST:
+                        ++this.curX;
+                        sx = this.curX + temp; sy = this.curY - temp;
+                        ex = sx; ey = this.curY + temp;
+                        vx = temp; vy = -temp;
+                        break;
+
+                    default: break;
+                }
+
+                this.DesignateRect(sx, sy, ex, ey, vx, vy);
+            }
+
         } //class DungeonBuilder
 
 
@@ -973,13 +1066,13 @@ namespace nangka
             private float fCameraX = 0.0f;
             private float fCameraY = 0.0f;
             private float fCameraZ = 0.0f;
-            private float[] tableMoveDelta = { 2.0f, 1.0f, 0.5f, 0.25f, 0.25f };
+            private float[] tableMoveDelta = { 2.0f, 1.0f, 0.5f, 0.25f, 0.25f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f };
 
             private bool bRotating = false;
             private int rotCount = 0;
             private float fAngle = 0.0f;
             private bool bRotMinus = false;
-            private float[] tableRotDelta = { 40,0f, 20.0f, 15.0f, 10.0f, 5.0f };
+            private float[] tableRotDelta = { 40,0f, 20.0f, 15.0f, 10.0f, 5.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f };
 
 
             public int x { get { return this._x; } }
@@ -1114,6 +1207,15 @@ namespace nangka
                 if (!this.IsReady()) return;
                 if (this.IsMoving() || this.IsRotating()) return;
 
+                switch (this._dir)
+                {
+                    case Direction.NORTH: --this._y; break;
+                    case Direction.SOUTH: ++this._y; break;
+                    case Direction.WEST: --this._x; break;
+                    case Direction.EAST: ++this._x; break;
+                    default: break;
+                }
+
                 this.moveDir = this._dir;
                 this.moveCount = 0;
                 this.bMoving = true;
@@ -1126,12 +1228,14 @@ namespace nangka
 
                 switch (this._dir)
                 {
-                    case Direction.NORTH: this.moveDir = Direction.SOUTH; break;
-                    case Direction.SOUTH: this.moveDir = Direction.NORTH; break;
-                    case Direction.WEST: this.moveDir = Direction.EAST; break;
-                    case Direction.EAST: this.moveDir = Direction.WEST; break;
+                    case Direction.NORTH: ++this._y; break;
+                    case Direction.SOUTH: --this._y; break;
+                    case Direction.WEST: ++this._x; break;
+                    case Direction.EAST: --this._x; break;
                     default: break;
                 }
+
+                this.moveDir = Utility.GetOppositeDirection(this._dir);
                 this.moveCount = 0;
                 this.bMoving = true;
             }
@@ -1344,7 +1448,7 @@ namespace nangka
                     int x = this.mapData.startX;
                     int y = this.mapData.startY;
 
-                    this.builder.Create(x, y);
+                    this.builder.Create(x, y, Define.SHOWABLE_BLOCK);
 
                 } while (false);
 
@@ -1396,13 +1500,27 @@ namespace nangka
             {
                 if (this.player.IsMoving() || this.player.IsRotating()) return;
 
-                if (Input.GetKeyDown(KeyCode.LeftArrow))
+                if (Input.GetKey(KeyCode.LeftArrow))
                 {
                     this.player.RotateLeft();
                 }
-                else if (Input.GetKeyDown(KeyCode.RightArrow))
+                else if (Input.GetKey(KeyCode.RightArrow))
                 {
                     this.player.RotateRight();
+                }
+                else if (Input.GetKey(KeyCode.UpArrow))
+                {
+                    if (this.builder.CheckMoveAndScroll(this.player.dir))
+                    {
+                        this.player.MoveFront();
+                    }
+                }
+                else if (Input.GetKey(KeyCode.DownArrow))
+                {
+                    if (this.builder.CheckMoveAndScroll(Utility.GetOppositeDirection(this.player.dir)))
+                    {
+                        this.player.MoveBack();
+                    }
                 }
             }
 

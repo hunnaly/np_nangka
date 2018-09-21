@@ -7,6 +7,22 @@ using nangka.entity;
 namespace nangka {
     namespace utility
     {
+        //------------------------------------------------------------------
+        // 方向
+        //------------------------------------------------------------------
+        public enum Direction : int
+        {
+            NORTH = 0,
+            EAST = 1,
+            SOUTH = 2,
+            WEST = 3,
+            PLANE_MAX = 4,
+            UP = 4,
+            DOWN = 5,
+            SOLID_MAX = 6
+
+        } //enum Direction
+
 
         public static class Utility
         {
@@ -44,6 +60,26 @@ namespace nangka {
                 // フェードアウト完了待ち
                 while (iEntityFade.IsDoing()) yield return null;
                 yield return null;
+            }
+
+
+            //----------------------------------------------------------------
+            // 指定方向の反対を取得
+            //----------------------------------------------------------------
+            public static Direction GetOppositeDirection(Direction dir)
+            {
+                Direction retDir = dir;
+                switch (dir)
+                {
+                    case Direction.NORTH: retDir = Direction.SOUTH; break;
+                    case Direction.SOUTH: retDir = Direction.NORTH; break;
+                    case Direction.EAST: retDir = Direction.WEST; break;
+                    case Direction.WEST: retDir = Direction.EAST; break;
+                    case Direction.UP: retDir = Direction.DOWN; break;
+                    case Direction.DOWN: retDir = Direction.UP; break;
+                    default: break;
+                }
+                return retDir;
             }
 
 

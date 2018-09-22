@@ -6,10 +6,10 @@ namespace np {
 
     public abstract class NpEntity
     {
-        private bool bValidate = false;
-        private bool bReady = false;
-        private bool bPaused = false;
-        private bool bTerminate = false;
+        private bool __bValidate = false;
+        private bool __bReady = false;
+        private bool __bPaused = false;
+        private bool __bTerminate = false;
 
         protected virtual bool StartProc() { return true; }
         protected virtual bool UpdateProc() { return false; }
@@ -27,9 +27,9 @@ namespace np {
         {
             if (this.IsInvalidate())
             {
-                this.bTerminate = false;
-                this.bReady = true;
-                this.bValidate = true;
+                this.__bTerminate = false;
+                this.__bReady = true;
+                this.__bValidate = true;
             }
         }
 
@@ -41,7 +41,7 @@ namespace np {
             {
                 if (this.StartProc() == true)
                 {
-                    this.bReady = false;
+                    this.__bReady = false;
                 }
             }
             else
@@ -50,14 +50,14 @@ namespace np {
                 {
                     if (this.TerminateProc() == true)
                     {
-                        this.bValidate = false;
-                        this.bTerminate = false;
+                        this.__bValidate = false;
+                        this.__bTerminate = false;
                         this.CleanUp();
                     }
                 }
                 else
                 {
-                    if (this.bPaused == false && this.UpdateProc() == true)
+                    if (this.__bPaused == false && this.UpdateProc() == true)
                     {
                         this.Terminate();
                     }
@@ -77,14 +77,14 @@ namespace np {
             this.OnGUIProc();
         }
 
-        public void Pause(bool pause) { this.bPaused = pause; }
+        public void Pause(bool pause) { this.__bPaused = pause; }
 
-        public void Terminate() { this.bTerminate = true; }
+        public void Terminate() { this.__bTerminate = true; }
         public void CleanUpForce() { this.CleanUp(); }
 
-        public bool IsInvalidate() { return (this.bValidate == false); }
-        public bool IsReady() { return this.bReady; }
-        public bool IsTerminating() { return this.bTerminate; }
+        public bool IsInvalidate() { return (this.__bValidate == false); }
+        public bool IsReady() { return this.__bReady; }
+        public bool IsTerminating() { return this.__bTerminate; }
 
         public U GetInterface<T, U>()
             where T : class, U

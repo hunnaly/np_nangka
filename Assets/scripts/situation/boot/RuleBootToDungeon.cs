@@ -37,6 +37,15 @@ namespace nangka {
                     // TextureResources Entity の登録
                     Global.Instance.EntityCtrl.CreateAndRegist<EntityTextureResources>();
 
+                    // MapData Entity の登録
+                    Global.Instance.EntityCtrl.CreateAndRegist<EntityMapData>();
+
+                    // PlayerData Entity の登録
+                    Global.Instance.EntityCtrl.CreateAndRegist<EntityPlayerData>();
+
+                    // Player Entity の登録
+                    Global.Instance.EntityCtrl.CreateAndRegist<EntityPlayer>();
+
                     // Dungeon Entity の登録
                     Global.Instance.EntityCtrl.CreateAndRegist<EntityDungeon>();
 

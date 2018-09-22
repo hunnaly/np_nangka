@@ -568,307 +568,6 @@ namespace nangka
 
 
         //------------------------------------------------------------------
-        // IMapData
-        //------------------------------------------------------------------
-        public interface IMapData
-        {
-            Texture LoadTexture(string path);
-            void UnloadTexture(string path);
-
-        } //interface IMapData
-
-        //------------------------------------------------------------------
-        // MapData
-        //------------------------------------------------------------------
-        public class MapData
-        {
-            public class BlockData
-            {
-                // Direction.SOLID_MAX 個のテクスチャIDを格納する
-                // 各 Map ごとに 256種類まで利用可能
-                public byte[] idTip;
-
-                // Direction.* bit目の On/Off で障壁あり/なしをあらわす
-                // Direction.PLANE_MAX 分(平面方向のみ)の情報をもつ
-                public uint collision;
-            }
-
-            private bool bValid = false;
-            private IMapData intfLoader = null;
-
-            private bool bLoaded = false;
-            private string _name = "";
-            private int _width = 0;
-            private int _height = 0;
-            private int _startX = 0;
-            private int _startY = 0;
-            private Direction _startDir = 0;
-            private Dictionary<byte, string> tableTexturePath = null;
-            private Dictionary<byte, Texture> tableTexture = null; // 0 => null をダミー値としてもたせる
-            private BlockData[] tableData = null;
-
-            public string name { get { return this._name; } }
-            public int width { get { return this._width; } }
-            public int height { get { return this._height; } }
-            public int startX { get { return this._startX; } }
-            public int startY { get { return this._startY; } }
-            public Direction startDir { get { return this._startDir; } }
-
-
-            //------------------------------------------------------------------
-            // 基本処理
-            //------------------------------------------------------------------
-
-            public void Init(IMapData intf)
-            {
-                this.intfLoader = intf;
-                this.bValid = true;
-            }
-
-            // マップデータを読み込む
-            public void Ready(/*string name*/)
-            {
-                this.SetDummyData();
-            }
-
-            public void Reset()
-            {
-                // コリジョン情報とデザイン情報
-                int num = this._width * this._height;
-                for (int i = 0; i < num; i++) { this.tableData[i].idTip = null; }
-                this.tableData = null;
-
-                // テクスチャ情報
-                foreach (KeyValuePair<byte, string> pair in this.tableTexturePath)
-                {
-                    intfLoader.UnloadTexture(pair.Value);
-                }
-                this.tableTexturePath.Clear();
-                this.tableTexture.Clear();
-                this.tableTexturePath = null;
-                this.tableTexture = null;
-
-                // 基本情報
-                this._name = "";
-                this._width = 0;
-                this._height = 0;
-                this._startX = 0;
-                this._startY = 0;
-                this._startDir = 0;
-            }
-
-            public void Clear()
-            {
-                this.Reset();
-
-                this.intfLoader = null;
-                this.bValid = false;
-            }
-
-
-            //------------------------------------------------------------------
-            // 処理
-            //------------------------------------------------------------------
-
-            public Texture[] GetBlockTexture(int x, int y)
-            {
-                if (this.IsOutOfRange(x, y)) return null;
-
-                Texture[] tableTex = new Texture[(int)Direction.SOLID_MAX];
-                for (int i=0; i<(int)Direction.SOLID_MAX; i++)
-                {
-                    tableTex[i] = this.GetTextureReal(x, y, (Direction)i);
-                }
-                return tableTex;
-            }
-
-            public Texture GetTexture(int x, int y, Direction dir)
-            {
-                if (this.IsOutOfRange(x, y)) return null;
-                return this.GetTextureReal(x, y, dir);
-            }
-            private Texture GetTextureReal(int x, int y, Direction dir)
-            {
-                int idx = y * this._width + x;
-                return this.tableTexture[this.tableData[idx].idTip[(int)dir]];
-            }
-
-            public bool IsMovable(int x, int y, Direction dir)
-            {
-                if (this.IsOutOfRange(x, y)) return false;
-
-                int idx = y * this._width + x;
-                return ((this.tableData[idx].collision & (1 << (int)dir)) == 0);
-            }
-
-            public bool IsOutOfRange(int x, int y)
-            {
-                return (x < 0 || y < 0 || x >= this._width || y >= this._height) ? true : false;
-            }
-
-
-            //------------------------------------------------------------------
-            // ダミー処理
-            //------------------------------------------------------------------
-
-            // 仮データ
-            private void SetDummyData()
-            {
-                if (this.intfLoader == null) return;
-
-                // 基本情報
-                this._name = "dummy";
-                this._width = 8;
-                this._height = 8;
-                this._startX = 0;
-                this._startY = 0;
-                this._startDir = Direction.EAST;
-
-                // テクスチャ情報
-                Texture tex = null;
-                this.tableTexturePath = new Dictionary<byte, string>();
-                this.tableTexture = new Dictionary<byte, Texture>();
-                this.tableTexture.Add(0, null);
-
-                tex = intfLoader.LoadTexture(Define.RES_PATH_TEXTURE_WALL_BRICK_CEILING);
-                this.tableTexturePath.Add(1, Define.RES_PATH_TEXTURE_WALL_BRICK_CEILING);
-                this.tableTexture.Add(1, tex);
-
-                tex = intfLoader.LoadTexture(Define.RES_PATH_TEXTURE_WALL_BRICK_SIDEWALL);
-                this.tableTexturePath.Add(2, Define.RES_PATH_TEXTURE_WALL_BRICK_SIDEWALL);
-                this.tableTexture.Add(2, tex);
-
-                // コリジョン情報とデザイン情報
-                int num = this.width * this.height;
-                this.tableData = new BlockData[num];
-                for (int i = 0; i < num; i++)
-                {
-                    this.tableData[i] = new BlockData();
-                    this.tableData[i].idTip = new byte[(int)Direction.SOLID_MAX];
-                    this.tableData[i].collision = 0;
-                }
-                //   0   1   2   3   4   5   6   7
-                // +---+---+---+---+---+---+---+---+
-                //0| @                             |
-                // +---+---+---+---+---+---+---+   +
-                //1|   |   |                   |   |
-                // +   +   +   +---+   +---+---+   +
-                //2|   |           |   |       |   |
-                // +   +   +---+---+   +---+   +   +
-                //3|   |       |           |   |   |
-                // +   +   +   +   +   +---+   +   +
-                //4|   |   |   |   |   |       |   |
-                // +   +---+   +   +---+   +---+   +
-                //5|           |               |   |
-                // +   +   +   +---+---+   +   +   +
-                //6|               |   |           |
-                // +   +   +   +---+   +---+---+   +
-                //7|           |                   |
-                // +---+---+---+---+---+---+---+---+
-
-                this.DSetBlock(this.tableData[0], 2, 0, 2, 2, 1, 1, true, false, true, true);
-                this.DSetBlock(this.tableData[1], 2, 0, 2, 0, 1, 1, true, false, true, false);
-                this.DSetBlock(this.tableData[2], 2, 0, 2, 0, 1, 1, true, false, true, false);
-                this.DSetBlock(this.tableData[3], 2, 0, 2, 0, 1, 1, true, false, true, false);
-                this.DSetBlock(this.tableData[4], 2, 0, 2, 0, 1, 1, true, false, true, false);
-                this.DSetBlock(this.tableData[5], 2, 0, 2, 0, 1, 1, true, false, true, false);
-                this.DSetBlock(this.tableData[6], 2, 0, 2, 0, 1, 1, true, false, true, false);
-                this.DSetBlock(this.tableData[7], 2, 2, 0, 0, 1, 1, true, true, false, false);
-
-                this.DSetBlock(this.tableData[8], 2, 2, 0, 2, 1, 1, true, true, false, true);
-                this.DSetBlock(this.tableData[9], 2, 2, 0, 2, 1, 1, true, true, false, true);
-                this.DSetBlock(this.tableData[10], 2, 0, 0, 2, 1, 1, true, false, false, true);
-                this.DSetBlock(this.tableData[11], 2, 0, 2, 0, 1, 1, true, false, true, false);
-                this.DSetBlock(this.tableData[12], 2, 0, 0, 0, 1, 1, true, false, false, false);
-                this.DSetBlock(this.tableData[13], 2, 0, 2, 0, 1, 1, true, false, true, false);
-                this.DSetBlock(this.tableData[14], 2, 2, 2, 0, 1, 1, true, true, true, false);
-                this.DSetBlock(this.tableData[15], 0, 2, 0, 2, 1, 1, false, true, false, true);
-
-                this.DSetBlock(this.tableData[16], 0, 2, 0, 2, 1, 1, false, true, false, true);
-                this.DSetBlock(this.tableData[17], 0, 0, 0, 2, 1, 1, false, false, false, true);
-                this.DSetBlock(this.tableData[18], 0, 0, 2, 0, 1, 1, false, false, true, false);
-                this.DSetBlock(this.tableData[19], 2, 2, 2, 0, 1, 1, true, true, true, false);
-                this.DSetBlock(this.tableData[20], 0, 2, 0, 2, 1, 1, false, true, false, true);
-                this.DSetBlock(this.tableData[21], 2, 0, 2, 2, 1, 1, true, false, true, true);
-                this.DSetBlock(this.tableData[22], 2, 2, 0, 0, 1, 1, true, true, false, false);
-                this.DSetBlock(this.tableData[23], 0, 2, 0, 2, 1, 1, false, true, false, true);
-
-                this.DSetBlock(this.tableData[24], 0, 2, 0, 2, 1, 1, false, true, false, true);
-                this.DSetBlock(this.tableData[25], 0, 0, 0, 2, 1, 1, false, false, false, true);
-                this.DSetBlock(this.tableData[26], 2, 2, 0, 0, 1, 1, true, true, false, false);
-                this.DSetBlock(this.tableData[27], 2, 0, 0, 2, 1, 1, true, false, false, true);
-                this.DSetBlock(this.tableData[28], 0, 0, 0, 0, 1, 1, false, false, false, false);
-                this.DSetBlock(this.tableData[29], 2, 2, 2, 0, 1, 1, true, true, true, false);
-                this.DSetBlock(this.tableData[30], 0, 2, 0, 2, 1, 1, false, true, false, true);
-                this.DSetBlock(this.tableData[31], 0, 2, 0, 2, 1, 1, false, true, false, true);
-
-                this.DSetBlock(this.tableData[48], 0, 0, 0, 2, 1, 1, false, false, false, true);
-                this.DSetBlock(this.tableData[32], 0, 2, 0, 2, 1, 1, false, true, false, true);
-                this.DSetBlock(this.tableData[33], 0, 2, 2, 2, 1, 1, false, true, true, true);
-                this.DSetBlock(this.tableData[34], 0, 2, 0, 2, 1, 1, false, true, false, true);
-                this.DSetBlock(this.tableData[35], 0, 2, 0, 2, 1, 1, false, true, false, true);
-                this.DSetBlock(this.tableData[36], 0, 2, 2, 2, 1, 1, false, true, true, true);
-                this.DSetBlock(this.tableData[37], 2, 0, 0, 2, 1, 1, true, false, false, true);
-                this.DSetBlock(this.tableData[38], 0, 2, 2, 0, 1, 1, false, true, true, false);
-                this.DSetBlock(this.tableData[39], 0, 2, 0, 2, 1, 1, false, true, false, true);
-
-                this.DSetBlock(this.tableData[40], 0, 0, 0, 2, 1, 1, false, false, false, true);
-                this.DSetBlock(this.tableData[41], 2, 0, 0, 0, 1, 1, true, false, false, false);
-                this.DSetBlock(this.tableData[42], 0, 2, 0, 0, 1, 1, false, true, false, false);
-                this.DSetBlock(this.tableData[43], 0, 0, 2, 2, 1, 1, false, false, true, true);
-                this.DSetBlock(this.tableData[44], 2, 0, 2, 0, 1, 1, true, false, true, false);
-                this.DSetBlock(this.tableData[45], 0, 0, 0, 0, 1, 1, false, false, false, false);
-                this.DSetBlock(this.tableData[46], 2, 2, 0, 0, 1, 1, true, true, false, false);
-                this.DSetBlock(this.tableData[47], 0, 2, 0, 2, 1, 1, false, true, false, true);
-
-                this.DSetBlock(this.tableData[49], 0, 0, 0, 0, 1, 1, false, false, false, false);
-                this.DSetBlock(this.tableData[50], 0, 0, 0, 0, 1, 1, false, false, false, false);
-                this.DSetBlock(this.tableData[51], 2, 2, 2, 0, 1, 1, true, true, true, false);
-                this.DSetBlock(this.tableData[52], 2, 2, 0, 2, 1, 1, true, true, false, true);
-                this.DSetBlock(this.tableData[53], 0, 0, 2, 2, 1, 1, false, false, true, true);
-                this.DSetBlock(this.tableData[54], 0, 0, 2, 0, 1, 1, false, false, true, false);
-                this.DSetBlock(this.tableData[55], 0, 2, 0, 0, 1, 1, false, true, false, false);
-
-                this.DSetBlock(this.tableData[56], 0, 0, 2, 2, 1, 1, false, false, true, true);
-                this.DSetBlock(this.tableData[57], 0, 0, 2, 0, 1, 1, false, false, true, false);
-                this.DSetBlock(this.tableData[58], 0, 2, 2, 0, 1, 1, false, true, true, false);
-                this.DSetBlock(this.tableData[59], 2, 0, 2, 2, 1, 1, true, false, true, true);
-                this.DSetBlock(this.tableData[60], 0, 0, 2, 0, 1, 1, false, false, true, false);
-                this.DSetBlock(this.tableData[61], 2, 0, 2, 0, 1, 1, true, false, true, false);
-                this.DSetBlock(this.tableData[62], 2, 0, 2, 0, 1, 1, true, false, true, false);
-                this.DSetBlock(this.tableData[63], 0, 2, 2, 0, 1, 1, false, true, true, false);
-
-                Debug.Log("collision(0x0):"+ this.tableData[0].collision);
-            }
-            private void DSetBlock(BlockData data,
-                byte n, byte e, byte s, byte w, byte u, byte d,
-                bool bn, bool be, bool bs, bool bw)
-            {
-                this.DSetDesign(data, n, e, s, w, u, d);
-                this.DSetCollision(data, bn, be, bs, bw);
-            }
-            private void DSetDesign(BlockData data, byte n, byte e, byte s, byte w, byte u, byte d)
-            {
-                data.idTip[(int)Direction.NORTH] = n;
-                data.idTip[(int)Direction.EAST] = e;
-                data.idTip[(int)Direction.SOUTH] = s;
-                data.idTip[(int)Direction.WEST] = w;
-                data.idTip[(int)Direction.UP] = u;
-                data.idTip[(int)Direction.DOWN] = d;
-            }
-            private void DSetCollision(BlockData data, bool n, bool e, bool s, bool w)
-            {
-                uint flag = 0;
-                if (n) flag |= (1 << (int)Direction.NORTH);
-                if (e) flag |= (1 << (int)Direction.EAST);
-                if (s) flag |= (1 << (int)Direction.SOUTH);
-                if (w) flag |= (1 << (int)Direction.WEST);
-                data.collision = flag;
-            }
-        }
-
-
-        //------------------------------------------------------------------
         // DungeonBuilder
         //------------------------------------------------------------------
         public class DungeonBuilder
@@ -881,8 +580,7 @@ namespace nangka
             private int showableBlockNum = 0;
 
             private DungeonStructure refStructure = null;
-            private MapData refMapData = null;
-            private IMapData intfLoader = null;
+            private IEntityMapData refIMapData = null;
 
             private GameObject prefabWall = null;
 
@@ -892,13 +590,12 @@ namespace nangka
 
 
             // 初期化
-            public void Init(DungeonStructure structure, MapData mapData, IMapData intf)
+            public void Init(DungeonStructure structure, IEntityMapData refIMapData)
             {
                 if (this.IsValid()) return;
 
                 this.refStructure = structure;
-                this.refMapData = mapData;
-                this.intfLoader = intf;
+                this.refIMapData = refIMapData;
                 this.bValid = true;
             }
 
@@ -908,7 +605,6 @@ namespace nangka
                 if (!this.IsValid() || this.IsReady()) return;
 
                 this.prefabWall = Resources.Load<GameObject>(Define.RES_PATH_PREFAB_WALL);
-                this.refMapData.Init(this.intfLoader);
                 this.refStructure.Init(this.prefabWall);
                 this.bReady = true;
             }
@@ -919,7 +615,7 @@ namespace nangka
                 if (!this.IsReady()) return;
 
                 if (this.refStructure != null) this.refStructure.Clear();
-                if (this.refMapData != null) this.refMapData.Clear();
+                if (this.refIMapData != null) this.refIMapData.Clear();
                 if (this.prefabWall) { Resources.UnloadAsset(this.prefabWall); this.prefabWall = null; }
                 this.bReady = false;
             }
@@ -942,8 +638,6 @@ namespace nangka
                 this.curX = x;
                 this.curY = y;
                 this.showableBlockNum = num;
-
-                this.refMapData.Ready();
                 
                 this.refStructure.Ready(this.showableBlockNum);
 
@@ -976,7 +670,7 @@ namespace nangka
             {
                 // 指定ブロックのテクスチャ情報を取得
                 // マップ範囲外のときは null が返される
-                Texture[] tableTex = this.refMapData.GetBlockTexture(mx, my);
+                Texture[] tableTex = this.refIMapData.GetBlockTexture(mx, my);
 
                 // マップ範囲外のときは無効化
                 if (tableTex == null)
@@ -995,7 +689,7 @@ namespace nangka
             // 進めるなら指定方向に 1 ライン分視覚化領域をずらす
             public bool CheckMoveAndScroll(Direction dir)
             {
-                bool b = this.refMapData.IsMovable(this.curX, this.curY, dir);
+                bool b = this.refIMapData.IsMovable(this.curX, this.curY, dir);
                 if (b) this.Scroll(dir);
                 return b;
             }
@@ -1047,322 +741,14 @@ namespace nangka
 
 
         //------------------------------------------------------------------
-        // Player
-        //------------------------------------------------------------------
-        public class Player
-        {
-            private bool bValid = false;
-            private bool bReady = false;
-            private bool bPaused = false;
-
-            private int _x = 0;
-            private int _y = 0;
-            private Direction _dir = 0;
-            private Camera camera = null;
-
-            private bool bMoving = false;
-            private int moveCount = 0;
-            private Direction moveDir = 0;
-            private float fCameraX = 0.0f;
-            private float fCameraY = 0.0f;
-            private float fCameraZ = 0.0f;
-            private float[] tableMoveDelta = { 2.0f, 1.0f, 0.5f, 0.25f, 0.25f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f };
-
-            private bool bRotating = false;
-            private int rotCount = 0;
-            private float fAngle = 0.0f;
-            private bool bRotMinus = false;
-            private float[] tableRotDelta = { 40,0f, 20.0f, 15.0f, 10.0f, 5.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f };
-
-
-            public int x { get { return this._x; } }
-            public int y { get { return this._y; } }
-            public Direction dir { get { return this._dir; } }
-            public void Pause(bool b) { this.bPaused = b; }
-
-            public bool IsValid() { return this.bValid; }
-            public bool IsReady() { return this.bReady; }
-            public bool IsPaused() { return this.bPaused; }
-            public bool IsMoving() { return this.bMoving; }
-            public bool IsRotating() { return this.bRotating; }
-
-
-            // 初期化
-            public void Init(Camera camera)
-            {
-                if (this.IsValid()) return;
-
-                this.camera = camera;
-                this.bValid = true;
-            }
-
-            // 準備処理
-            public void Ready(int x, int y, Direction dir)
-            {
-                if (!this.IsValid() || this.IsReady()) return;
-
-                this._x = x;
-                this._y = y;
-                this.SetCameraDirection(dir);
-                this.bPaused = false;
-
-                Vector3 pos = this.camera.transform.position;
-                this.fCameraX = pos.x;
-                this.fCameraY = pos.y;
-                this.fCameraZ = pos.z;
-
-                this.bMoving = false;
-                this.moveCount = 0;
-                this.moveDir = 0;
-
-                this.bRotating = false;
-                this.rotCount = 0;
-                this.bRotMinus = false;
-                this.fAngle = 0.0f;
-
-                this.bReady = true;
-            }
-
-            // 初期化情報を残した状態でリセット
-            public void Reset()
-            {
-                if (!this.IsReady()) return;
-
-                this._x = 0;
-                this._y = 0;
-                this._dir = 0;
-                this.bPaused = false;
-
-                this.bMoving = false;
-                this.moveCount = 0;
-                this.moveDir = 0;
-                this.fCameraX = 0.0f;
-                this.fCameraY = 0.0f;
-                this.fCameraZ = 0.0f;
-                this.SetCameraPos(this.fCameraX, this.fCameraY, this.fCameraZ);
-
-                this.bRotating = false;
-                this.rotCount = 0;
-                this.bRotMinus = false;
-                this.fAngle = 0.0f;
-                this.SetCameraAngleY(this.fAngle);
-
-                this.bReady = false;
-            }
-
-            // 初期化情報も含めてクリア
-            public void Clear()
-            {
-                this.Reset();
-
-                this.camera = null;
-                this.bValid = false;
-            }
-
-            public void Update()
-            {
-                if (!this.IsReady()) return;
-                if (this.IsPaused()) return;
-
-                this.MoveProc();
-                this.RotateProc();
-            }
-
-            public void Rotate(Direction dir)
-            {
-                if (!this.IsReady()) return;
-                if (this.IsMoving() || this.IsRotating()) return;
-
-                this.SetCameraDirection(dir);
-            }
-
-            public void RotateRight()
-            {
-                if (!this.IsReady()) return;
-                if (this.IsMoving() || this.IsRotating()) return;
-
-                this.fAngle = this.DirectionToAngleY(this._dir);
-                this._dir = this.DirectionRight(this._dir);
-
-                this.bRotMinus = false;
-                this.rotCount = 0;
-                this.bRotating = true;
-            }
-
-            public void RotateLeft()
-            {
-                if (!this.IsReady()) return;
-                if (this.IsMoving() || this.IsRotating()) return;
-
-                this.fAngle = this.DirectionToAngleY(this._dir);
-                this._dir = this.DirectionLeft(this._dir);
-
-                this.bRotMinus = true;
-                this.rotCount = 0;
-                this.bRotating = true;
-            }
-
-            public void MoveFront()
-            {
-                if (!this.IsReady()) return;
-                if (this.IsMoving() || this.IsRotating()) return;
-
-                switch (this._dir)
-                {
-                    case Direction.NORTH: --this._y; break;
-                    case Direction.SOUTH: ++this._y; break;
-                    case Direction.WEST: --this._x; break;
-                    case Direction.EAST: ++this._x; break;
-                    default: break;
-                }
-
-                this.moveDir = this._dir;
-                this.moveCount = 0;
-                this.bMoving = true;
-            }
-
-            public void MoveBack()
-            {
-                if (!this.IsReady()) return;
-                if (this.IsMoving() || this.IsRotating()) return;
-
-                switch (this._dir)
-                {
-                    case Direction.NORTH: ++this._y; break;
-                    case Direction.SOUTH: --this._y; break;
-                    case Direction.WEST: ++this._x; break;
-                    case Direction.EAST: --this._x; break;
-                    default: break;
-                }
-
-                this.moveDir = Utility.GetOppositeDirection(this._dir);
-                this.moveCount = 0;
-                this.bMoving = true;
-            }
-
-
-            private void MoveProc()
-            {
-                if (!this.bMoving) return;
-
-                float delta = this.tableMoveDelta[this.moveCount];
-                switch (this.moveDir)
-                {
-                    case Direction.NORTH: this.fCameraZ += delta; break;
-                    case Direction.SOUTH: this.fCameraZ -= delta; break;
-                    case Direction.WEST: this.fCameraX -= delta; break;
-                    case Direction.EAST: this.fCameraX += delta; break;
-                    default: break;
-                }
-                this.SetCameraPos(this.fCameraX, this.fCameraY, this.fCameraZ);
-
-                if (++this.moveCount >= this.tableMoveDelta.Length)
-                {
-                    this.moveCount = 0;
-                    this.bMoving = false;
-                }
-            }
-
-            private void RotateProc()
-            {
-                if (!this.IsRotating()) return;
-
-                float delta = this.tableRotDelta[this.rotCount];
-                this.fAngle += delta * (this.bRotMinus ? -1.0f : 1.0f);
-                this.SetCameraAngleY(this.fAngle);
-
-                if (++this.rotCount >= this.tableRotDelta.Length)
-                {
-                    this.rotCount = 0;
-                    this.bRotating = false;
-                }
-            }
-
-            private void SetCameraPos(float x, float y, float z)
-            {
-                Vector3 pos = this.camera.transform.position;
-                pos.x = x;
-                pos.y = y;
-                pos.z = z;
-                this.camera.transform.position = pos;
-            }
-
-
-            private void SetCameraDirection(Direction dir)
-            {
-                this._dir = dir;
-
-                float angle = 0.0f;
-                switch (dir)
-                {
-                    case Direction.SOUTH: angle = 180.0f; break;
-                    case Direction.WEST: angle = -90.0f; break;
-                    case Direction.EAST: angle = 90.0f; break;
-                    default: break;
-                }
-                this.SetCameraAngleY(angle);
-            }
-
-            private void SetCameraAngleY(float angle)
-            {
-                this.camera.transform.rotation = Quaternion.AngleAxis(angle, new Vector3(0.0f, 1.0f, 0.0f));
-            }
-
-            private float DirectionToAngleY(Direction dir)
-            {
-                float angle = 0.0f;
-                switch (dir)
-                {
-                    case Direction.SOUTH: angle = 180.0f; break;
-                    case Direction.WEST: angle = -90.0f; break;
-                    case Direction.EAST: angle = 90.0f; break;
-                    default: break;
-                }
-                return angle;
-            }
-
-            private Direction DirectionRight(Direction dir)
-            {
-                Direction ret = dir;
-                switch (dir)
-                {
-                    case Direction.NORTH: ret = Direction.EAST; break;
-                    case Direction.SOUTH: ret = Direction.WEST; break;
-                    case Direction.WEST: ret = Direction.NORTH; break;
-                    case Direction.EAST: ret = Direction.SOUTH; break;
-                    default: break;
-                }
-                return ret;
-            }
-
-            private Direction DirectionLeft(Direction dir)
-            {
-                Direction ret = dir;
-                switch (dir)
-                {
-                    case Direction.NORTH: ret = Direction.WEST; break;
-                    case Direction.SOUTH: ret = Direction.EAST; break;
-                    case Direction.WEST: ret = Direction.SOUTH; break;
-                    case Direction.EAST: ret = Direction.NORTH; break;
-                    default: break;
-                }
-                return ret;
-            }
-
-        } //class Player
-
-
-        //------------------------------------------------------------------
         // EntityDungeon
         //------------------------------------------------------------------
-        public class EntityDungeon : NpEntity, IEntityDungeon, IMapData
+        public class EntityDungeon : NpEntity, IEntityDungeon
         {
             private bool bInitialized = false;
 
             private DungeonStructure structure = null;
             private DungeonBuilder builder = null;
-            private MapData mapData = null;
-            private Player player = null;
 
 
             //------------------------------------------------------------------
@@ -1383,8 +769,6 @@ namespace nangka
 
                 this.EventProc();
 
-                this.player.Update();
-
                 return false;
             }
 
@@ -1399,8 +783,6 @@ namespace nangka
 
                 if (this.structure != null) { this.structure.Clear(); this.structure = null; }
                 if (this.builder != null) { this.builder.Clear(); this.builder = null; }
-                if (this.mapData != null) { this.mapData.Clear(); this.mapData = null; }
-                if (this.player != null) { this.player.Clear(); this.player = null; }
             }
 
 
@@ -1424,8 +806,7 @@ namespace nangka
 
             private IEnumerator Ready()
             {
-                while (Utility.GetIEntityTextureResources() == null) yield return null;
-                while (Utility.GetIEntityTextureResources().IsInitialized() == false) yield return null;
+                yield return this.ReadyResources();
 
                 yield return this.Build();
 
@@ -1436,17 +817,38 @@ namespace nangka
                 this.bInitialized = true;
             }
 
+            // リソース準備
+            private IEnumerator ReadyResources()
+            {
+                IEntityTextureResources iTexRes = null;
+                while ((iTexRes = Utility.GetIEntityTextureResources()) == null) yield return null;
+
+                iTexRes.InitLogic();
+                iTexRes.ReadyLogic();
+
+                yield return null;
+            }
+
             // ダンジョン構築
             private IEnumerator Build()
             {
+                IEntityMapData iMapData = null;
+                while ((iMapData = Utility.GetIEntityMapData()) == null) yield return null;
+
+                iMapData.InitLogic();
+                iMapData.ReadyLogic();
+
                 do {
-                    if (this.InitBuilder() == null) break;
+                    if (this.InitBuilder(iMapData) == null) break;
                     this.builder.Ready();
 
+                    ////////////////////////////////////
                     // キャラクターの位置
                     // TODO: 本来はセーブデータから取得。ひとまず初期情報を指定。
-                    int x = this.mapData.startX;
-                    int y = this.mapData.startY;
+                    MapData mapData = iMapData.GetMapData();
+                    int x = mapData.startX;
+                    int y = mapData.startY;
+                    ////////////////////////////////////
 
                     this.builder.Create(x, y, Define.SHOWABLE_BLOCK);
 
@@ -1458,33 +860,43 @@ namespace nangka
             // プレイヤー準備
             private IEnumerator ReadyPlayer()
             {
-                this.player = new Player();
-                this.player.Init(Global.Instance.cameraPlayer);
+                IEntityPlayerData iPlayerData = null;
+                while ((iPlayerData = Utility.GetIEntityPlayerData()) == null) yield return null;
+                iPlayerData.InitLogic();
+                iPlayerData.ReadyLogic();
 
+                ////////////////////////////////////
                 // キャラクターの位置と向き
                 // TODO: 本来はセーブデータから取得。ひとまず初期情報を指定。
-                int x = this.mapData.startX;
-                int y = this.mapData.startY;
-                Direction dir = this.mapData.startDir;
-                this.player.Ready(x, y, dir);
+                MapData mapData = Utility.GetIEntityMapData().GetMapData();
+                int x = mapData.startX;
+                int y = mapData.startY;
+                Direction dir = mapData.startDir;
+                ////////////////////////////////////
+
+                PlayerData playerData = iPlayerData.GetPlayerData();
+                playerData.SetPos(x, y);
+                playerData.SetDirection(dir);
+
+                IEntityPlayer iPlayer = null;
+                while ((iPlayer = Utility.GetIEntityPlayer()) == null) yield return null;
+                iPlayer.InitLogic(Global.Instance.cameraPlayer);
+                iPlayer.ReadyLogic(playerData, Global.Instance.cameraPlayer.transform.position);
 
                 yield return null;
             }
 
             // ダンジョン構築オブジェクトの準備
-            private DungeonBuilder InitBuilder()
+            private DungeonBuilder InitBuilder(IEntityMapData iMapData)
             {
                 do {
-                    this.mapData = new MapData();
-                    if (this.mapData == null) break;
-
                     this.structure = new DungeonStructure();
                     if (this.structure == null) break;
 
                     this.builder = new DungeonBuilder();
                     if (this.builder == null) break;
 
-                    this.builder.Init(this.structure, this.mapData, this);
+                    this.builder.Init(this.structure, iMapData);
 
                 } while (false);
 
@@ -1498,28 +910,29 @@ namespace nangka
 
             private void EventProc()
             {
-                if (this.player.IsMoving() || this.player.IsRotating()) return;
+                IEntityPlayer iPlayer = Utility.GetIEntityPlayer();
+                if (iPlayer.IsBusy()) return;
 
                 if (Input.GetKey(KeyCode.LeftArrow))
                 {
-                    this.player.RotateLeft();
+                    iPlayer.RotateLeft();
                 }
                 else if (Input.GetKey(KeyCode.RightArrow))
                 {
-                    this.player.RotateRight();
+                    iPlayer.RotateRight();
                 }
                 else if (Input.GetKey(KeyCode.UpArrow))
                 {
-                    if (this.builder.CheckMoveAndScroll(this.player.dir))
+                    if (this.builder.CheckMoveAndScroll(iPlayer.GetPlayerData().dir))
                     {
-                        this.player.MoveFront();
+                        iPlayer.MoveFront();
                     }
                 }
                 else if (Input.GetKey(KeyCode.DownArrow))
                 {
-                    if (this.builder.CheckMoveAndScroll(Utility.GetOppositeDirection(this.player.dir)))
+                    if (this.builder.CheckMoveAndScroll(Utility.GetOppositeDirection(iPlayer.GetPlayerData().dir)))
                     {
-                        this.player.MoveBack();
+                        iPlayer.MoveBack();
                     }
                 }
             }

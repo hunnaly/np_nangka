@@ -64,8 +64,10 @@ namespace nangka {
 
 
             //----------------------------------------------------------------
-            // 指定方向の反対を取得
+            // 方向関連
             //----------------------------------------------------------------
+
+            // 指定方向の反対を取得
             public static Direction GetOppositeDirection(Direction dir)
             {
                 Direction retDir = dir;
@@ -80,6 +82,50 @@ namespace nangka {
                     default: break;
                 }
                 return retDir;
+            }
+
+            // 指定方向を向いて右手側の方向を取得
+            public static Direction DirectionRight(Direction dir)
+            {
+                Direction ret = dir;
+                switch (dir)
+                {
+                    case Direction.NORTH: ret = Direction.EAST; break;
+                    case Direction.SOUTH: ret = Direction.WEST; break;
+                    case Direction.WEST: ret = Direction.NORTH; break;
+                    case Direction.EAST: ret = Direction.SOUTH; break;
+                    default: break;
+                }
+                return ret;
+            }
+
+            // 指定方向を向いて左手側の方向を取得
+            public static Direction DirectionLeft(Direction dir)
+            {
+                Direction ret = dir;
+                switch (dir)
+                {
+                    case Direction.NORTH: ret = Direction.WEST; break;
+                    case Direction.SOUTH: ret = Direction.EAST; break;
+                    case Direction.WEST: ret = Direction.SOUTH; break;
+                    case Direction.EAST: ret = Direction.NORTH; break;
+                    default: break;
+                }
+                return ret;
+            }
+
+            // Y軸を軸とした指定方向の角度を取得
+            public static float DirectionToAngleY(Direction dir)
+            {
+                float angle = 0.0f;
+                switch (dir)
+                {
+                    case Direction.SOUTH: angle = 180.0f; break;
+                    case Direction.WEST: angle = -90.0f; break;
+                    case Direction.EAST: angle = 90.0f; break;
+                    default: break;
+                }
+                return angle;
             }
 
 
@@ -102,6 +148,9 @@ namespace nangka {
             public static IEntityDungeon GetIEntityDungeon() { return GetInterface<EntityDungeon, IEntityDungeon>(Define.ENTITY_CNAME_DUNGEON); }
             public static IEntityTextureResources GetIEntityTextureResources() { return GetInterface<EntityTextureResources, IEntityTextureResources>(Define.ENTITY_CNAME_TEXTURE_RESOURCES); }
             public static IEntityFrame GetIEntityFrame() { return GetInterface<EntityFrame, IEntityFrame>(Define.ENTITY_CNAME_FRAME); }
+            public static IEntityPlayer GetIEntityPlayer() { return GetInterface<EntityPlayer, IEntityPlayer>(Define.ENTITY_CNAME_PLAYER); }
+            public static IEntityPlayerData GetIEntityPlayerData() { return GetInterface<EntityPlayerData, IEntityPlayerData>(Define.ENTITY_CNAME_PLAYER_DATA); }
+            public static IEntityMapData GetIEntityMapData() { return GetInterface<EntityMapData, IEntityMapData>(Define.ENTITY_CNAME_MAP_DATA); }
 
         }
 

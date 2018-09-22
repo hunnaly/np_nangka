@@ -8,6 +8,7 @@ namespace nangka {
         // パラメータ
         //----------------------------------------------------------------
         public static int SHOWABLE_BLOCK = 3;
+        public static float CAMERA_TWEAK = 1.8f;
 
 
         //----------------------------------------------------------------

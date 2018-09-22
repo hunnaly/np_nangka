@@ -13,7 +13,7 @@ namespace nangka
         public interface IEntityPlayer
         {
             void InitLogic(Camera camera);
-            void ReadyLogic(PlayerData data, Vector3 cameraPos);
+            void ReadyLogic(PlayerData data);
             void Reset();
             void Clear();
 
@@ -109,12 +109,11 @@ namespace nangka
             // ロジック準備処理／ロジックリセット処理
             //------------------------------------------------------------------
 
-            public void ReadyLogic(PlayerData data, Vector3 cameraPos)
+            public void ReadyLogic(PlayerData data)
             {
                 if (!this.IsInitializedLogic() || this.IsReadyLogic()) return;
 
                 this._refPlayerData = data;
-                this._cameraCtrl.SetPos(cameraPos);
                 this._cameraCtrl.SetDir(data.dir);
 
                 this._bReadyLogic = true;
@@ -223,7 +222,8 @@ namespace nangka
             //------------------------------------------------------------------
             class CameraControl
             {
-                private Camera _refCamera;
+                private GameObject _refCamera;
+                private Camera _refCameraReal; //使わないかも？
 
                 //------------------------------------------------------------------
                 // 移動処理関連変数
@@ -258,12 +258,11 @@ namespace nangka
 
                 public void SetCamera(Camera camera)
                 {
-                    this._refCamera = camera;
+                    this._refCameraReal = camera;
+                    this._refCamera = camera.transform.root.gameObject;
 
-                    Vector3 pos = camera.transform.position;
-                    this._fCameraX = pos.x;
-                    this._fCameraY = pos.y;
-                    this._fCameraZ = pos.z;
+                    Vector3 pos = this._refCamera.transform.position;
+                    this.SetPosBuf(pos);
                 }
 
                 //------------------------------------------------------------------
@@ -272,7 +271,17 @@ namespace nangka
 
                 public Vector3 GetPos() { return this._refCamera.transform.position; }
 
-                public void SetPos(Vector3 pos) { this._refCamera.transform.position = pos; }
+                public void SetPos(Vector3 pos, bool bUpdateBuf=false)
+                {
+                    this._refCamera.transform.position = pos;
+                    if (bUpdateBuf) this.SetPosBuf(pos);
+                }
+                private void SetPosBuf(Vector3 pos)
+                {
+                    this._fCameraX = pos.x;
+                    this._fCameraY = pos.y;
+                    this._fCameraZ = pos.z;
+                }
 
                 public void SetDir(Direction dir) { this.SetCameraAngleY(Utility.DirectionToAngleY(dir)); }
 

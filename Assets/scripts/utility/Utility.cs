@@ -151,6 +151,7 @@ namespace nangka {
             public static IEntityPlayer GetIEntityPlayer() { return GetInterface<EntityPlayer, IEntityPlayer>(Define.ENTITY_CNAME_PLAYER); }
             public static IEntityPlayerData GetIEntityPlayerData() { return GetInterface<EntityPlayerData, IEntityPlayerData>(Define.ENTITY_CNAME_PLAYER_DATA); }
             public static IEntityMapData GetIEntityMapData() { return GetInterface<EntityMapData, IEntityMapData>(Define.ENTITY_CNAME_MAP_DATA); }
+            public static IEntityStructure GetIEntityStructure() { return GetInterface<EntityStructure, IEntityStructure>(Define.ENTITY_CNAME_STRUCTURE); }
 
         }
 

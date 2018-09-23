@@ -60,10 +60,9 @@ namespace nangka
         //------------------------------------------------------------------
         public interface IEntityMapData
         {
-            void InitLogic();
-            void ReadyLogic();
+            bool IsReadyLogic();
+            void Load(IEntityTextureResources iTexRes);
             void Reset();
-            void Clear();
 
             MapData GetMapData();
             Texture[] GetBlockTexture(int x, int y);
@@ -78,28 +77,21 @@ namespace nangka
 
         //------------------------------------------------------------------
         // EntityMapData
-        //   EntityTextureResources の準備が完了している必要がある。
         //------------------------------------------------------------------
         public class EntityMapData : NpEntity, IEntityMapData
         {
-            //------------------------------------------------------------------
-            // 初期化関連変数
-            //------------------------------------------------------------------
-
-            private bool _bInitializedLogic;
-            private bool IsInitializedLogic() { return this._bInitializedLogic; }
-
-            private MapData _data;
-            private Dictionary<byte, string> tableTexturePath;
-            private Dictionary<byte, Texture> tableTexture; // 0 => null をダミー値としてもたせる
-
             //------------------------------------------------------------------
             // 準備処理関連変数
             //------------------------------------------------------------------
 
             private bool _bReadyLogic;
-            private bool IsReadyLogic() { return this._bReadyLogic; }
+            public bool IsReadyLogic() { return this._bReadyLogic; }
 
+            private MapData _data;
+            public MapData GetMapData() { return this._data; }
+
+            private Dictionary<byte, string> tableTexturePath;
+            private Dictionary<byte, Texture> tableTexture; // 0 => null をダミー値としてもたせる
             private BlockData[] tableData;
 
 
@@ -107,6 +99,28 @@ namespace nangka
             //------------------------------------------------------------------
             // Entity メイン処理
             //------------------------------------------------------------------
+
+            protected override bool StartProc()
+            {
+                Debug.Log("EntityMapData.StartProc()");
+
+                // TODO: 例外エラー対応が必要
+                this._data = new MapData();
+                this.tableTexturePath = new Dictionary<byte, string>();
+                this.tableTexture = new Dictionary<byte, Texture>();
+                this.tableTexture.Add(0, null);
+
+                this._bReadyLogic = true;
+                return true;
+            }
+
+            protected override bool TerminateProc()
+            {
+                Debug.Log("EntityMapData.TerminateProc()");
+
+                this._bReadyLogic = false;
+                return true;
+            }
 
             protected override void CleanUp()
             {
@@ -116,62 +130,24 @@ namespace nangka
                 this.ClearTextureTable();
                 this.tableTexturePath = null;
                 this.tableTexture = null;
-            }
 
-
-            //------------------------------------------------------------------
-            // ロジック初期化処理／ロジック終了処理
-            //------------------------------------------------------------------
-
-            public void InitLogic()
-            {
-                if (this.IsInitializedLogic()) return;
-
-                bool b = false;
-                do
-                {
-                    this._data = new MapData();
-                    if (this._data == null) break;
-
-                    this.tableTexturePath = new Dictionary<byte, string>();
-                    if (this.tableTexturePath == null) break;
-
-                    this.tableTexture = new Dictionary<byte, Texture>();
-                    if (this.tableTexture == null) break;
-                    this.tableTexture.Add(0, null);
-
-                    b = true;
-                }
-                while (false);
-
-                this._bInitializedLogic = b;
-            }
-
-            public void Clear()
-            {
-                if (!this.IsInitializedLogic()) return;
-
-                this.Reset();
-                this.tableTexturePath = null;
-                this.tableTexture = null;
-
-                this._bInitializedLogic = true;
+                this._data = null;
             }
 
             //------------------------------------------------------------------
             // ロジック準備処理／ロジックリセット処理
             //------------------------------------------------------------------
 
-            public void ReadyLogic()
+            public void Load(IEntityTextureResources iTexRes)
             {
-                if (!this.IsInitializedLogic() || this.IsReadyLogic()) return;
+                if (!this.IsReadyLogic()) return;
 
-                Utility.StartCoroutine(this.ReadyLogicReal());
+                this.SetDummyData(iTexRes);
             }
 
             public void Reset()
             {
-                if (!this.IsInitializedLogic() || !this.IsReadyLogic()) return;
+                if (!this.IsReadyLogic()) return;
 
                 // コリジョン情報とデザイン情報
                 this.ClearBlockTable();
@@ -182,21 +158,6 @@ namespace nangka
 
                 // 基本情報
                 this._data.Reset();
-
-                this._bReadyLogic = false;
-            }
-
-            private IEnumerator ReadyLogicReal()
-            {
-                // 外部で EntityTextureResources の準備が完了されるのを待つ
-                IEntityTextureResources iTexRes = null;
-                while ((iTexRes = Utility.GetIEntityTextureResources()) == null) yield return null;
-                while (iTexRes.IsReadyLogic() == false) yield return null;
-
-                this.SetDummyData();
-
-                this._bReadyLogic = true;
-                yield return null;
             }
 
             private void ClearBlockTable()
@@ -222,12 +183,6 @@ namespace nangka
                     this.tableTexture.Add(0, null);
                 }
             }
-
-            //------------------------------------------------------------------
-            // MapData 関連
-            //------------------------------------------------------------------
-
-            public MapData GetMapData() { return this._data; }
 
 
             //------------------------------------------------------------------
@@ -276,7 +231,7 @@ namespace nangka
             //------------------------------------------------------------------
 
             // 仮データ
-            private void SetDummyData()
+            private void SetDummyData(IEntityTextureResources iTexRes)
             {
                 // 基本情報
                 this._data.SetName("dummy");
@@ -284,11 +239,11 @@ namespace nangka
                 this._data.SetStartData(0, 0, Direction.EAST);
 
                 // テクスチャ情報
-                Texture tex = Utility.GetIEntityTextureResources().Load(Define.RES_PATH_TEXTURE_WALL_BRICK_CEILING);
+                Texture tex = iTexRes.Load(Define.RES_PATH_TEXTURE_WALL_BRICK_CEILING);
                 this.tableTexturePath.Add(1, Define.RES_PATH_TEXTURE_WALL_BRICK_CEILING);
                 this.tableTexture.Add(1, tex);
 
-                tex = Utility.GetIEntityTextureResources().Load(Define.RES_PATH_TEXTURE_WALL_BRICK_SIDEWALL);
+                tex = iTexRes.Load(Define.RES_PATH_TEXTURE_WALL_BRICK_SIDEWALL);
                 this.tableTexturePath.Add(2, Define.RES_PATH_TEXTURE_WALL_BRICK_SIDEWALL);
                 this.tableTexture.Add(2, tex);
 

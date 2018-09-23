@@ -12,10 +12,9 @@ namespace nangka
         //------------------------------------------------------------------
         public interface IEntityPlayer
         {
-            void InitLogic(Camera camera, GameObject objBase);
-            void ReadyLogic(PlayerData data);
+            bool IsReadyLogic();
+            void Prepare(Camera camera, GameObject objBase, PlayerData data);
             void Reset();
-            void Clear();
 
             PlayerData GetPlayerData();
 
@@ -37,28 +36,33 @@ namespace nangka
         public class EntityPlayer : NpEntity, IEntityPlayer
         {
             //------------------------------------------------------------------
-            // 初期化関連変数
-            //------------------------------------------------------------------
-
-            private bool _bInitializedLogic;
-            private bool IsInitializedLogic() { return this._bInitializedLogic; }
-
-            private CameraControl _cameraCtrl;
-
-            //------------------------------------------------------------------
             // 準備処理関連変数
             //------------------------------------------------------------------
 
             private bool _bReadyLogic;
-            private bool IsReadyLogic() { return this._bReadyLogic; }
+            public bool IsReadyLogic() { return this._bReadyLogic; }
 
+            private CameraControl _cameraCtrl;
             private PlayerData _refPlayerData;
             public PlayerData GetPlayerData() { return this._refPlayerData; }
+
+            private bool IsPrepared() { return (this._refPlayerData != null); }
 
 
             //------------------------------------------------------------------
             // Entity メイン処理
             //------------------------------------------------------------------
+
+            protected override bool StartProc()
+            {
+                Debug.Log("EntityPlayer.StartProc()");
+
+                // TODO: 例外エラー対応を行う必要がある
+                this._cameraCtrl = new CameraControl();
+
+                this._bReadyLogic = true;
+                return true;
+            }
 
             protected override bool UpdateProc()
             {
@@ -66,62 +70,37 @@ namespace nangka
                 return false;
             }
 
+            protected override bool TerminateProc()
+            {
+                Debug.Log("EntityPlayer.TerminateProc()");
+
+                this._bReadyLogic = false;
+                return true;
+            }
+
             protected override void CleanUp()
             {
-                this.Clear();
-            }
-
-
-            //------------------------------------------------------------------
-            // ロジック初期化処理／ロジック終了処理
-            //------------------------------------------------------------------
-
-            public void InitLogic(Camera camera, GameObject objBase)
-            {
-                if (this.IsInitializedLogic()) return;
-
-                bool b = false;
-                do {
-                    this._cameraCtrl = new CameraControl();
-                    if (this._cameraCtrl == null) break;
-
-                    this._cameraCtrl.SetCamera(camera, objBase);
-
-                    b = true;
-                }
-                while (false);
-
-                this._bInitializedLogic = b;
-            }
-
-            public void Clear()
-            {
-                if (!this.IsInitializedLogic()) return;
-
-                this.Reset();
-
                 this._cameraCtrl = null;
-
-                this._bInitializedLogic = true;
             }
+
 
             //------------------------------------------------------------------
             // ロジック準備処理／ロジックリセット処理
             //------------------------------------------------------------------
 
-            public void ReadyLogic(PlayerData data)
+            public void Prepare(Camera camera, GameObject objBase, PlayerData data)
             {
-                if (!this.IsInitializedLogic() || this.IsReadyLogic()) return;
+                if (!this.IsReadyLogic()) return;
+                if (this.IsPrepared()) return;
 
                 this._refPlayerData = data;
+                this._cameraCtrl.SetCamera(camera, objBase);
                 this._cameraCtrl.SetDir(data.dir);
-
-                this._bReadyLogic = true;
             }
 
             public void Reset()
             {
-                if (!this.IsInitializedLogic() || !this.IsReadyLogic()) return;
+                if (!this.IsReadyLogic()) return;
 
                 this._refPlayerData = null;
 
@@ -134,7 +113,7 @@ namespace nangka
 
             private void UpdateLogic()
             {
-                if (!this.IsReadyLogic()) return;
+                if (!this.IsPrepared()) return;
 
                 this._cameraCtrl.MoveProc();
                 this._cameraCtrl.RotateProc();
@@ -146,12 +125,16 @@ namespace nangka
 
             public void RotateRight()
             {
+                if (!this.IsPrepared()) return;
+
                 Direction dir = this._refPlayerData.dir;
                 this.Rotate(dir, false, Utility.DirectionRight(dir));
             }
 
             public void RotateLeft()
             {
+                if (!this.IsPrepared()) return;
+
                 Direction dir = this._refPlayerData.dir;
                 this.Rotate(dir, true, Utility.DirectionLeft(dir));
             }
@@ -172,11 +155,15 @@ namespace nangka
 
             public void MoveFront()
             {
+                if (!this.IsPrepared()) return;
+
                 this.Move(this._refPlayerData.dir);
             }
 
             public void MoveBack()
             {
+                if (!this.IsPrepared()) return;
+
                 this.Move(Utility.GetOppositeDirection(this._refPlayerData.dir));
             }
 
@@ -212,7 +199,7 @@ namespace nangka
 
             public bool IsBusy()
             {
-                if (!this.IsReadyLogic()) return false;
+                if (!this.IsPrepared()) return false;
                 return (this._cameraCtrl.IsMoving() || this._cameraCtrl.IsRotating());
             }
 

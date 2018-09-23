@@ -8,7 +8,6 @@ namespace nangka {
         // パラメータ
         //----------------------------------------------------------------
         public static int SHOWABLE_BLOCK = 3;
-        public static float CAMERA_TWEAK = 1.8f;
 
 
         //----------------------------------------------------------------
@@ -29,6 +28,7 @@ namespace nangka {
         public static string ENTITY_CNAME_PLAYER = ENTITY_PATH + "EntityPlayer";
         public static string ENTITY_CNAME_PLAYER_DATA = ENTITY_PATH + "EntityPlayerData";
         public static string ENTITY_CNAME_MAP_DATA = ENTITY_PATH + "EntityMapData";
+        public static string ENTITY_CNAME_STRUCTURE = ENTITY_PATH + "EntityStructure";
 
 
         //----------------------------------------------------------------
@@ -38,18 +38,18 @@ namespace nangka {
 
 
         //----------------------------------------------------------------
-        // Textureパス名
-        //----------------------------------------------------------------
-        public static string RES_PATH_TEXTURE_WALL_BRICK_CEILING = "Textures/block02";
-        public static string RES_PATH_TEXTURE_WALL_BRICK_SIDEWALK = "Textures/block02";
-        public static string RES_PATH_TEXTURE_WALL_BRICK_SIDEWALL = "Textures/block01";
-
-
-        //----------------------------------------------------------------
         // Object名
         //----------------------------------------------------------------
         public static string OBJ_NAME_DUNGEON_ROOT = "Dungeon";
         public static string OBJ_NAME_DUNGEON_BLOCK_ROOT = "Block_";
+
+
+        //----------------------------------------------------------------
+        // Textureパス名 (ダミーデータ用)
+        //----------------------------------------------------------------
+        public static string RES_PATH_TEXTURE_WALL_BRICK_CEILING = "Textures/block02";
+        public static string RES_PATH_TEXTURE_WALL_BRICK_SIDEWALK = "Textures/block02";
+        public static string RES_PATH_TEXTURE_WALL_BRICK_SIDEWALL = "Textures/block01";
 
     } //class Define
 

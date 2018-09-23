@@ -16,12 +16,8 @@ namespace nangka
         //------------------------------------------------------------------
         public interface IEntityTextureResources
         {
-            void InitLogic();
-            void ReadyLogic();
-            void Reset();
-            void Clear();
-
             bool IsReadyLogic();
+            void Reset();
 
             Texture Load(string path);
             void Unload(string path);
@@ -37,29 +33,40 @@ namespace nangka
         public class EntityTextureResources : NpEntity, IEntityTextureResources
         {
             //------------------------------------------------------------------
-            // 初期化関連変数
-            //------------------------------------------------------------------
-
-            private bool _bInitializedLogic;
-            private bool IsInitializedLogic() { return this._bInitializedLogic; }
-
-            private Dictionary<string, Texture> cache = null;
-
-            //------------------------------------------------------------------
             // 準備処理関連変数
             //------------------------------------------------------------------
 
             private bool _bReadyLogic;
             public bool IsReadyLogic() { return this._bReadyLogic; }
 
+            private Dictionary<string, Texture> cache = null;
 
             //------------------------------------------------------------------
             // Entity メイン処理
             //------------------------------------------------------------------
 
+            protected override bool StartProc()
+            {
+                Debug.Log("EntityTextureResourceManager.StartProc()");
+
+                // TODO: 例外エラー対応を行う必要がある
+                this.cache = new Dictionary<string, Texture>();
+                this._bReadyLogic = true;
+
+                return true;
+            }
+
             protected override bool UpdateProc()
             {
                 return false;
+            }
+
+            protected override bool TerminateProc()
+            {
+                Debug.Log("EntityTextureResourceManager.TerminateProc()");
+
+                this._bReadyLogic = false;
+                return true;
             }
 
             protected override void CleanUp()
@@ -72,54 +79,14 @@ namespace nangka
 
 
             //------------------------------------------------------------------
-            // ロジック初期化処理／ロジック終了処理
-            //------------------------------------------------------------------
-
-            public void InitLogic()
-            {
-                if (this.IsInitializedLogic()) return;
-
-                bool b = false;
-                do {
-                    this.cache = new Dictionary<string, Texture>();
-                    if (this.cache == null) break;
-
-                    b = true;
-                }
-                while (false);
-
-                this._bInitializedLogic = b;
-            }
-
-            public void Clear()
-            {
-                if (!this.IsInitializedLogic()) return;
-
-                this.Reset();
-
-                this.cache = null;
-
-                this._bInitializedLogic = false;
-            }
-
-            //------------------------------------------------------------------
             // ロジック準備処理／ロジックリセット処理
             //------------------------------------------------------------------
 
-            public void ReadyLogic()
-            {
-                if (!this.IsInitializedLogic() || this.IsReadyLogic()) return;
-
-                this._bReadyLogic = true;
-            }
-
             public void Reset()
             {
-                if (!this.IsInitializedLogic() || !this.IsReadyLogic()) return;
+                if (!this.IsReadyLogic()) return;
 
                 this.ClearCache();
-
-                this._bReadyLogic = false;
             }
 
             private void ClearCache()
@@ -142,6 +109,8 @@ namespace nangka
 
             public Texture Load(string path)
             {
+                if (!this.IsReadyLogic()) return null;
+
                 if (this.Exist(path)) return this.Get(path);
 
                 Texture tex = Resources.Load<Texture>(path);
@@ -151,6 +120,8 @@ namespace nangka
 
             public void Unload(string path)
             {
+                if (!this.IsReadyLogic()) return;
+
                 if (!this.Exist(path)) return;
                 this.UnloadAndRemove(path);
             }

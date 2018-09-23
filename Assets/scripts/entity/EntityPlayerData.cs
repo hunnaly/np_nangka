@@ -49,10 +49,8 @@ namespace nangka
         //------------------------------------------------------------------
         public interface IEntityPlayerData
         {
-            void InitLogic();
-            void ReadyLogic();
+            bool IsReadyLogic();
             void Reset();
-            void Clear();
 
             PlayerData GetPlayerData();
             void LoadPlayerData();
@@ -71,70 +69,42 @@ namespace nangka
         public class EntityPlayerData : NpEntity, IEntityPlayerData
         {
             //------------------------------------------------------------------
-            // 初期化関連変数
-            //------------------------------------------------------------------
-
-            private bool _bInitializedLogic;
-            private bool IsInitializedLogic() { return this._bInitializedLogic; }
-
-            private PlayerData _data;
-
-            //------------------------------------------------------------------
             // 準備処理関連変数
             //------------------------------------------------------------------
 
             private bool _bReadyLogic;
-            private bool IsReadyLogic() { return this._bReadyLogic; }
+            public bool IsReadyLogic() { return this._bReadyLogic; }
+
+            private PlayerData _data;
+            public PlayerData GetPlayerData() { return this._data; }
 
 
             //------------------------------------------------------------------
             // Entity メイン処理
             //------------------------------------------------------------------
 
-            protected override bool UpdateProc()
+            protected override bool StartProc()
             {
-                return false;
+                Debug.Log("EntityPlayerData.StartProc()");
+
+                // TODO: 例外エラー対応が必要
+                this._data = new PlayerData();
+
+                this._bReadyLogic = true;
+                return true;
+            }
+
+            protected override bool TerminateProc()
+            {
+                Debug.Log("EntityPlayerData.TerminateProc()");
+
+                this._bReadyLogic = false;
+                return true;
             }
 
             protected override void CleanUp()
             {
-                this.Clear();
-            }
-
-            //------------------------------------------------------------------
-            // ロジック初期化処理／ロジック終了処理
-            //------------------------------------------------------------------
-
-            public void InitLogic()
-            {
-                if (this.IsInitializedLogic()) return;
-
-                bool b = false;
-                this._data = new PlayerData();
-                if (this._data != null) { b = true; }
-
-                this._bInitializedLogic = b;
-            }
-
-            public void Clear()
-            {
-                if (!this.IsInitializedLogic()) return;
-
-                this.Reset();
-
                 this._data = null;
-                this._bInitializedLogic = true;
-            }
-
-            //------------------------------------------------------------------
-            // ロジック準備処理／ロジックリセット処理
-            //------------------------------------------------------------------
-
-            public void ReadyLogic()
-            {
-                if (!this.IsInitializedLogic() || this.IsReadyLogic()) return;
-
-                this._bReadyLogic = true;
             }
 
             public void Reset()
@@ -142,14 +112,11 @@ namespace nangka
                 if (!this.IsReadyLogic()) return;
 
                 this._data.Reset();
-                this._bReadyLogic = false;
             }
 
             //------------------------------------------------------------------
             // PlayerData 関連
             //------------------------------------------------------------------
-
-            public PlayerData GetPlayerData() { return this._data; }
 
             public void LoadPlayerData(/*セーブデータ指定*/)
             {

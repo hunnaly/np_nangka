@@ -16,7 +16,7 @@ namespace nangka
         //------------------------------------------------------------------
         public interface IEntityFrame
         {
-            bool IsInitialized();
+            bool IsReadyLogic();
             void Terminate();
 
         } //interface EntityFrame
@@ -27,8 +27,14 @@ namespace nangka
         //------------------------------------------------------------------
         public class EntityFrame : NpEntity, IEntityFrame
         {
-            private bool bInitialized = false;
-            public bool IsInitialized() { return this.bInitialized; }
+            //------------------------------------------------------------------
+            // 準備処理関連変数
+            //------------------------------------------------------------------
+
+            private bool _bReadyLogic;
+            public bool IsReadyLogic() { return this._bReadyLogic; }
+
+            private bool _bTerminating;
 
 
             //------------------------------------------------------------------
@@ -37,22 +43,25 @@ namespace nangka
 
             protected override bool StartProc()
             {
-                Debug.Log("EntityFrame.StartProc()");
-                this.bInitialized = false;
-                Utility.StartCoroutine(this.Ready());
+                Utility.StartCoroutine(this.ReadyLogic());
                 return true;
             }
 
             protected override bool UpdateProc()
             {
-                if (this.bInitialized == false) return false;
+                if (this._bReadyLogic == false) return false;
                 return false;
             }
 
             protected override bool TerminateProc()
             {
-                this.bInitialized = false;
-                return true;
+                if (this._bReadyLogic)
+                {
+                    this._bReadyLogic = false;
+                    this._bTerminating = true;
+                    Utility.StartCoroutine(this.TerminateLogic());
+                }
+                return (this._bTerminating == false);
             }
 
             protected override void CleanUp()
@@ -60,17 +69,23 @@ namespace nangka
                 Debug.Log("EntityFrame.CleanUp()");
             }
 
-
             //------------------------------------------------------------------
             // 準備処理
             //------------------------------------------------------------------
 
-            private IEnumerator Ready()
+            private IEnumerator ReadyLogic()
             {
                 yield return SceneManager.LoadSceneAsync(Define.SCENE_NAME_FRAME, LoadSceneMode.Additive);
 
-                this.bInitialized = true;
+                this._bReadyLogic = true;
                 yield return null;
+            }
+
+            private IEnumerator TerminateLogic()
+            {
+                yield return SceneManager.UnloadSceneAsync(Define.SCENE_NAME_FRAME);
+
+                this._bTerminating = false;
             }
 
         }

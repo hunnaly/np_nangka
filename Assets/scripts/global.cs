@@ -13,9 +13,17 @@ namespace nangka {
         private static Global instance = new Global();
 
         // PlayerCamera
-        private Camera _cameraPlayer = null;
+        private Camera _cameraPlayer;
         public Camera cameraPlayer { get { return this._cameraPlayer; } }
-        public void SetPlayerCamera(Camera camera) { this._cameraPlayer = camera; }
+
+        private GameObject _objCameraPlayerBase;
+        public GameObject objCameraPlayerBase { get { return this._objCameraPlayerBase; } }
+
+        public void SetPlayerCamera(Camera camera, GameObject cameraBase=null)
+        {
+            this._cameraPlayer = camera;
+            this._objCameraPlayerBase = (cameraBase == null) ? (GameObject)camera.gameObject : cameraBase;
+        }
 
 
         // 共有参照データ

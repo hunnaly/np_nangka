@@ -304,6 +304,7 @@ MonoBehaviour:
   m_screenHeight: 600
   m_targetFrameRate: 60
   cameraPlayer: {fileID: 2067501305}
+  objCameraPlayerBase: {fileID: 68626384}
 --- !u!4 &1887984176
 Transform:
   m_ObjectHideFlags: 0

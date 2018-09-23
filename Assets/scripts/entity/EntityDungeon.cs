@@ -880,7 +880,7 @@ namespace nangka
 
                 IEntityPlayer iPlayer = null;
                 while ((iPlayer = Utility.GetIEntityPlayer()) == null) yield return null;
-                iPlayer.InitLogic(Global.Instance.cameraPlayer);
+                iPlayer.InitLogic(Global.Instance.cameraPlayer, Global.Instance.objCameraPlayerBase);
                 iPlayer.ReadyLogic(playerData);
 
                 yield return null;

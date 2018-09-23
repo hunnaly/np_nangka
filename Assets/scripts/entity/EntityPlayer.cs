@@ -12,7 +12,7 @@ namespace nangka
         //------------------------------------------------------------------
         public interface IEntityPlayer
         {
-            void InitLogic(Camera camera);
+            void InitLogic(Camera camera, GameObject objBase);
             void ReadyLogic(PlayerData data);
             void Reset();
             void Clear();
@@ -76,7 +76,7 @@ namespace nangka
             // ロジック初期化処理／ロジック終了処理
             //------------------------------------------------------------------
 
-            public void InitLogic(Camera camera)
+            public void InitLogic(Camera camera, GameObject objBase)
             {
                 if (this.IsInitializedLogic()) return;
 
@@ -85,7 +85,7 @@ namespace nangka
                     this._cameraCtrl = new CameraControl();
                     if (this._cameraCtrl == null) break;
 
-                    this._cameraCtrl.SetCamera(camera);
+                    this._cameraCtrl.SetCamera(camera, objBase);
 
                     b = true;
                 }
@@ -256,10 +256,10 @@ namespace nangka
                 // 各種設定処理
                 //------------------------------------------------------------------
 
-                public void SetCamera(Camera camera)
+                public void SetCamera(Camera camera, GameObject objBase)
                 {
                     this._refCameraReal = camera;
-                    this._refCamera = camera.transform.root.gameObject;
+                    this._refCamera = objBase;
 
                     Vector3 pos = this._refCamera.transform.position;
                     this.SetPosBuf(pos);

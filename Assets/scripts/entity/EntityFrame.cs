@@ -77,6 +77,23 @@ namespace nangka
             {
                 yield return SceneManager.LoadSceneAsync(Define.SCENE_NAME_FRAME, LoadSceneMode.Additive);
 
+                var scene = SceneManager.GetSceneByName(Define.SCENE_NAME_FRAME);
+                var canvas = scene.GetRootGameObjects().First(obj => obj.GetComponent<Canvas>() != null).GetComponent<Canvas>();
+                var component = canvas.GetComponent<ui>();
+
+                Vector3 pos = component.objectTable[0].transform.position;
+                Vector3 posMpEffect = component.objectTable[1].transform.position;
+                posMpEffect.x = pos.x;
+                posMpEffect.y = pos.y;
+                posMpEffect.z = pos.z;
+                component.objectTable[1].transform.position = pos;
+
+                Vector3 scale = component.objectTable[1].transform.localScale;
+                scale.x = 0.3f;
+                scale.y = 0.3f;
+                scale.z = 0.3f;
+                component.objectTable[1].transform.localScale = scale;
+
                 this._bReadyLogic = true;
                 yield return null;
             }

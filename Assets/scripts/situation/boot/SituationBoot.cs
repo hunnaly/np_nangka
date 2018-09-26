@@ -10,7 +10,8 @@ namespace nangka {
                 protected override bool CreateRules()
                 {
                     Debug.Log("SituationBoot.CreateRules()");
-                    INpRule rule = this.CreateRule<RuleBootToDungeon>();
+                    //INpRule rule = this.CreateRule<RuleBootToDungeon>();
+                    INpRule rule = this.CreateRule<RuleBootToDevEntrance>();
                     return (rule != null);
                 }
 

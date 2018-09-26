@@ -153,6 +153,7 @@ namespace nangka {
             public static IEntityMapData GetIEntityMapData() { return GetInterface<EntityMapData, IEntityMapData>(Define.ENTITY_CNAME_MAP_DATA); }
             public static IEntityStructure GetIEntityStructure() { return GetInterface<EntityStructure, IEntityStructure>(Define.ENTITY_CNAME_STRUCTURE); }
 
+            public static IEntityDevEntrance GetIEntityDevEntrance() { return GetInterface<EntityDevEntrance, IEntityDevEntrance>(Define.ENTITY_CNAME_DEV_ENTRANCE); }
         }
 
     } //namespace utility

@@ -15,6 +15,7 @@ namespace nangka {
         //----------------------------------------------------------------
         public static string SCENE_NAME_FADE = "ui_fade";
         public static string SCENE_NAME_FRAME = "ui_frame";
+        public static string SCENE_NAME_DEV_ENTRANCE = "ui_dev_entrance";
 
 
         //----------------------------------------------------------------
@@ -29,6 +30,8 @@ namespace nangka {
         public static string ENTITY_CNAME_PLAYER_DATA = ENTITY_PATH + "EntityPlayerData";
         public static string ENTITY_CNAME_MAP_DATA = ENTITY_PATH + "EntityMapData";
         public static string ENTITY_CNAME_STRUCTURE = ENTITY_PATH + "EntityStructure";
+
+        public static string ENTITY_CNAME_DEV_ENTRANCE = ENTITY_PATH + "EntityDevEntrance";
 
 
         //----------------------------------------------------------------

@@ -10,9 +10,8 @@ namespace nangka
         //------------------------------------------------------------------
         // IEntityStructure
         //------------------------------------------------------------------
-        public interface IEntityStructure
+        public interface IEntityStructure : IEntity
         {
-            bool IsReadyLogic();
             void Prepare(GameObject prefabPlane, int showableBlockNum);
             void Reset();
 
@@ -20,8 +19,6 @@ namespace nangka
             void ChangeBlock(int ofstX, int ofstY, Texture[] aTex);
             void ChangeWall(int ofstX, int ofstY, Direction dir, Texture tex);
             void Scroll(Direction dir);
-
-            void Terminate();
 
         } //interface IEntityStructure
 

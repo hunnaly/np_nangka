@@ -47,9 +47,8 @@ namespace nangka
         //------------------------------------------------------------------
         // IEntityPlayerData
         //------------------------------------------------------------------
-        public interface IEntityPlayerData
+        public interface IEntityPlayerData : IEntity
         {
-            bool IsReadyLogic();
             void Reset();
 
             PlayerData GetPlayerData();
@@ -57,8 +56,6 @@ namespace nangka
             /*
             void SavePlayerData();
             */
-
-            void Terminate();
 
         } //interface IEntityPlayerData
 

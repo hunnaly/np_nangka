@@ -58,9 +58,8 @@ namespace nangka
         //------------------------------------------------------------------
         // IEntityMapData
         //------------------------------------------------------------------
-        public interface IEntityMapData
+        public interface IEntityMapData : IEntity
         {
-            bool IsReadyLogic();
             void Load(IEntityTextureResources iTexRes);
             void Reset();
 
@@ -69,8 +68,6 @@ namespace nangka
             Texture GetTexture(int x, int y, Direction dir);
             bool IsMovable(int x, int y, Direction dir);
             bool IsOutOfRange(int x, int y);
-
-            void Terminate();
 
         } //interface IEntityMapData
 

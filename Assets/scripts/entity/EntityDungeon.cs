@@ -15,13 +15,10 @@ namespace nangka
         //------------------------------------------------------------------
         // IEntityDungeon
         //------------------------------------------------------------------
-        public interface IEntityDungeon
+        public interface IEntityDungeon : IEntity
         {
-            bool IsReadyLogic();
             void Run();
-
             void Pause(bool pause);
-            void Terminate();
 
         } //interface IEntityDungeon
 

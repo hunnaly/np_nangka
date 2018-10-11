@@ -14,10 +14,8 @@ namespace nangka
         //------------------------------------------------------------------
         // IEntityFrame
         //------------------------------------------------------------------
-        public interface IEntityFrame
+        public interface IEntityFrame : IEntity
         {
-            bool IsReadyLogic();
-            void Terminate();
 
         } //interface EntityFrame
 

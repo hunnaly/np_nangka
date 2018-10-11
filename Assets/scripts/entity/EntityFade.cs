@@ -14,14 +14,12 @@ namespace nangka {
         //------------------------------------------------------------------
         // IEntityFade
         //------------------------------------------------------------------
-        public interface IEntityFade
+        public interface IEntityFade : IEntity
         {
-            bool IsValid();
             void Activate(bool enabled);
             void FadeOut(float time = 1.0f, float target = 1.0f);
             void FadeIn(float time = 1.0f, bool bAutoActivateOff = true);
             bool IsDoing();
-            void Terminate();
 
         } //interface IEntityFade
 
@@ -31,9 +29,10 @@ namespace nangka {
         //------------------------------------------------------------------
         public class EntityFade : NpEntity, IEntityFade
         {
-            private bool bInitialized = false;
-            private bool bUnloading = false;
+            private bool _bReadyLogic = false;
+            public bool IsReadyLogic() { return this._bReadyLogic; }
 
+            private bool bUnloading = false;
             private bool bDoingFade = false;
             private bool bAutoActivateOff = false;
             private float fTime = 0.0f;
@@ -53,7 +52,7 @@ namespace nangka {
             protected override bool UpdateProc()
             {
                 // ui_fade のロードが完了していなければ何もせず完了を待つ
-                if (this.bInitialized == false) return false;
+                if (this._bReadyLogic == false) return false;
 
                 // フェード処理が設定されているときに処理を行う
                 if (this.IsDoing())
@@ -85,10 +84,10 @@ namespace nangka {
 
             protected override bool TerminateProc()
             {
-                if (this.bInitialized)
+                if (this._bReadyLogic)
                 {
                     this.Activate(false);
-                    this.bInitialized = false;
+                    this._bReadyLogic = false;
                     this.bUnloading = true;
                     Utility.StartCoroutine(this.UnloadSceneUIFade());
                 }
@@ -104,8 +103,6 @@ namespace nangka {
                 // ui_fade シーンが残ってしまうことに注意！！
             }
 
-
-            public bool IsValid() { return this.bInitialized; }
 
             public void Activate(bool enabled)
             {
@@ -135,7 +132,7 @@ namespace nangka {
 
                 // ノータイムで反映させるときはこのタイミングでフェード処理を完了させるが
                 // シーンのロードが完了していないときは Update に処理を委ねる
-                if (this.bInitialized)
+                if (this._bReadyLogic)
                 {
                     this.Activate(true);
 
@@ -164,7 +161,7 @@ namespace nangka {
                 {
                     this.fadePanel = objPanel.GetComponent<Image>();
                     this.fadePanel.enabled = false;
-                    this.bInitialized = (this.fadePanel != null);
+                    this._bReadyLogic = (this.fadePanel != null);
 
                     this.fRed = this.fadePanel.color.r;
                     this.fGreen = this.fadePanel.color.g;

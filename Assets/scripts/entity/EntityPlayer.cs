@@ -10,9 +10,8 @@ namespace nangka
         //------------------------------------------------------------------
         // IEntityPlayer
         //------------------------------------------------------------------
-        public interface IEntityPlayer
+        public interface IEntityPlayer : IEntity
         {
-            bool IsReadyLogic();
             void Prepare(Camera camera, GameObject objBase, PlayerData data);
             void Reset();
 
@@ -25,7 +24,6 @@ namespace nangka
             bool IsBusy();
 
             void Pause(bool pause);
-            void Terminate();
 
         } //interface IEntityPlayer
 

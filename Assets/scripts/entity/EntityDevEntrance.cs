@@ -21,11 +21,8 @@ namespace nangka
         //------------------------------------------------------------------
         // IEntityDevEntrance
         //------------------------------------------------------------------
-        public interface IEntityDevEntrance
+        public interface IEntityDevEntrance : IEntity
         {
-            bool IsReadyLogic();
-            void Terminate();
-
             DEV_ITEM GetSelected();
 
         } //interface IEntityDevEntrance

@@ -14,15 +14,12 @@ namespace nangka
         //------------------------------------------------------------------
         // IEntityTextureResources
         //------------------------------------------------------------------
-        public interface IEntityTextureResources
+        public interface IEntityTextureResources : IEntity
         {
-            bool IsReadyLogic();
             void Reset();
 
             Texture Load(string path);
             void Unload(string path);
-
-            void Terminate();
 
         } //interface IEntityTextureResources
 

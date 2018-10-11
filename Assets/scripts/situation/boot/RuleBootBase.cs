@@ -31,15 +31,11 @@ namespace nangka {
                 // フェードの準備処理を派生クラスへ提供する
                 protected IEnumerator ReadyEntityFade(bool bFadeOut=true)
                 {
-                    // Fade 制御 Entity を登録
-                    Global.Instance.EntityCtrl.CreateAndRegist<EntityFade>();
-
-                    // 有効な状態になるまで待つ
-                    IEntityFade iEntityFade = null;
-                    while ((iEntityFade = Utility.GetIEntityFade()) == null) yield return null;
-                    while (iEntityFade.IsValid() == false) yield return null;
+                    // Fade 制御 Entity を登録し、有効な状態になるまで待つ
+                    yield return Utility.RegistEntityFade();
 
                     // ノータイムでフェードアウト状態にしておく
+                    IEntityFade iEntityFade = Utility.GetIEntityFade();
                     if (bFadeOut) iEntityFade.FadeOut(0.0f);
                 }
             }

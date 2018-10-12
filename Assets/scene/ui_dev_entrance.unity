@@ -456,6 +456,7 @@ GameObject:
   - component: {fileID: 475555030}
   - component: {fileID: 475555029}
   - component: {fileID: 475555033}
+  - component: {fileID: 475555034}
   m_Layer: 5
   m_Name: CanvasDevTool
   m_TagString: Untagged
@@ -550,6 +551,17 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 0e1710358473794438e844a126e7ec49, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &475555034
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 475555028}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 16f861727313b2c4c8162252a5a713df, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   objectTable:

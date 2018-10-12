@@ -5,7 +5,7 @@ using UnityEngine.EventSystems;
 using UnityEngine.SceneManagement;
 using System.Linq;
 
-public class ui : ObjectTable
+public class ui : MonoBehaviour
 {
     void Awake()
     {

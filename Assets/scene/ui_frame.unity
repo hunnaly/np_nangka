@@ -14605,6 +14605,7 @@ GameObject:
   - component: {fileID: 689992599}
   - component: {fileID: 689992598}
   - component: {fileID: 689992597}
+  - component: {fileID: 689992602}
   m_Layer: 5
   m_Name: CanvasFrame
   m_TagString: Untagged
@@ -14623,11 +14624,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0e1710358473794438e844a126e7ec49, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  objectTable:
-  - {fileID: 582931386}
-  - {fileID: 549498035}
-  - {fileID: 1714606601}
-  - {fileID: 10329375}
 --- !u!114 &689992598
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -14704,6 +14700,22 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0, y: 0}
+--- !u!114 &689992602
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 689992596}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 16f861727313b2c4c8162252a5a713df, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  objectTable:
+  - {fileID: 582931386}
+  - {fileID: 549498035}
+  - {fileID: 1714606601}
+  - {fileID: 10329375}
 --- !u!1 &691702724
 GameObject:
   m_ObjectHideFlags: 0

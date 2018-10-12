@@ -154,7 +154,7 @@ namespace nangka {
 
                 var scene = SceneManager.GetSceneByName(Define.SCENE_NAME_FADE);
                 var canvas = scene.GetRootGameObjects().First(obj => obj.GetComponent<Canvas>() != null).GetComponent<Canvas>();
-                var component = canvas.GetComponent<ui>();
+                var component = canvas.GetComponent<ObjectTable>();
                 var objPanel = component.objectTable[0];
 
                 if (objPanel != null)

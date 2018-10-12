@@ -94,7 +94,7 @@ namespace nangka
 
                 var scene = SceneManager.GetSceneByName(Define.SCENE_NAME_DEV_ENTRANCE);
                 var canvas = scene.GetRootGameObjects().First(obj => obj.GetComponent<Canvas>() != null).GetComponent<Canvas>();
-                var component = canvas.GetComponent<ui>();
+                var component = canvas.GetComponent<ObjectTable>();
 
                 // MapEditor
                 this._refButtonMapEditor = component.objectTable[0];

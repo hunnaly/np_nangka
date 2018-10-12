@@ -77,7 +77,7 @@ namespace nangka
 
                 var scene = SceneManager.GetSceneByName(Define.SCENE_NAME_FRAME);
                 var canvas = scene.GetRootGameObjects().First(obj => obj.GetComponent<Canvas>() != null).GetComponent<Canvas>();
-                var component = canvas.GetComponent<ui>();
+                var component = canvas.GetComponent<ObjectTable>();
 
                 Vector3 pos = component.objectTable[0].transform.position;
                 Vector3 posMpEffect = component.objectTable[1].transform.position;

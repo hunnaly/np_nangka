@@ -5,11 +5,8 @@ using UnityEngine.EventSystems;
 using UnityEngine.SceneManagement;
 using System.Linq;
 
-public class ui : MonoBehaviour
+public class ui : ObjectTable
 {
-    [SerializeField]
-    public List<GameObject> objectTable;
-
     void Awake()
     {
         this.CheckAndAddEventSystem();
@@ -47,8 +44,11 @@ public class ui : MonoBehaviour
 
             if (rootCanvas.worldCamera != null)
             {
-                Object.Destroy(rootCanvas.worldCamera.gameObject);
-                rootCanvas.worldCamera = null;
+                if (rootCanvas.worldCamera != rootCanvasParentScene.worldCamera)
+                {
+                    Object.Destroy(rootCanvas.worldCamera.gameObject);
+                    rootCanvas.worldCamera = null;
+                }
             }
 
             rootCanvas.worldCamera = rootCanvasParentScene.worldCamera;

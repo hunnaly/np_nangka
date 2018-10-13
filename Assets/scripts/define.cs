@@ -30,6 +30,7 @@ namespace nangka {
         public static string ENTITY_CNAME_PLAYER_DATA = ENTITY_PATH + "EntityPlayerData";
         public static string ENTITY_CNAME_MAP_DATA = ENTITY_PATH + "EntityMapData";
         public static string ENTITY_CNAME_STRUCTURE = ENTITY_PATH + "EntityStructure";
+        public static string ENTITY_CNAME_MINIMAP = ENTITY_PATH + "EntityMiniMap";
 
         public static string ENTITY_CNAME_DEV_ENTRANCE = ENTITY_PATH + "EntityDevEntrance";
 
@@ -38,6 +39,7 @@ namespace nangka {
         // Prefabパス名
         //----------------------------------------------------------------
         public static string RES_PATH_PREFAB_WALL = "Prefabs/Wall";
+        public static string RES_PATH_PREFAB_ARROW = "Prefabs/Arrow";
 
 
         //----------------------------------------------------------------

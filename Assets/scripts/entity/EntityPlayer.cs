@@ -6,12 +6,24 @@ namespace nangka
 {
     namespace entity
     {
+        //------------------------------------------------------------------
+        // delegate
+        //------------------------------------------------------------------
+        public delegate void CB_Player_MoveStart(int xStart, int yStart, int xEnd, int yEnd);
+        public delegate void CB_Player_Move(Vector3 delta);
+        public delegate void CB_Player_MoveEnd();
+        public delegate void CB_PLayer_Rotate(float angleZ);
+
 
         //------------------------------------------------------------------
         // IEntityPlayer
         //------------------------------------------------------------------
         public interface IEntityPlayer : IEntity
         {
+            void SetCB_MoveStart(CB_Player_MoveStart cb);
+            void SetCB_Move(CB_Player_Move cb);
+            void SetCB_MoveEnd(CB_Player_MoveEnd cb);
+            void SetCB_Rotate(CB_PLayer_Rotate cb);
             void Prepare(Camera camera, GameObject objBase, PlayerData data);
             void Reset();
 
@@ -39,6 +51,11 @@ namespace nangka
 
             private bool _bReadyLogic;
             public bool IsReadyLogic() { return this._bReadyLogic; }
+
+            public void SetCB_MoveStart(CB_Player_MoveStart cb) { this._cameraCtrl.SetCB_MoveStart(cb); }
+            public void SetCB_Move(CB_Player_Move cb) { this._cameraCtrl.SetCB_Move(cb); }
+            public void SetCB_MoveEnd(CB_Player_MoveEnd cb) { this._cameraCtrl.SetCB_MoveEnd(cb); }
+            public void SetCB_Rotate(CB_PLayer_Rotate cb) { this._cameraCtrl.SetCB_Rotate(cb); }
 
             private CameraControl _cameraCtrl;
             private PlayerData _refPlayerData;
@@ -171,7 +188,14 @@ namespace nangka
 
                 if (this._cameraCtrl.Move(dir))
                 {
+                    int x = this._refPlayerData.x;
+                    int y = this._refPlayerData.y;
+
                     this.MovePlayerPos(dir);
+
+                    // 移動開始コールバック
+                    CB_Player_MoveStart cb = this._cameraCtrl.GetCB_MoveStart();
+                    if (cb != null) cb(x, y, this._refPlayerData.x, this._refPlayerData.y);
                 }
             }
 
@@ -210,6 +234,27 @@ namespace nangka
                 private GameObject _refCamera;
                 private Camera _refCameraReal; //使わないかも？
 
+                private CB_Player_MoveStart cbMoveStart;
+                public CB_Player_MoveStart GetCB_MoveStart() { return this.cbMoveStart; }
+                public void SetCB_MoveStart(CB_Player_MoveStart cb) {
+                    if (this.cbMoveStart == null) { this.cbMoveStart = cb; } else { this.cbMoveStart += cb; }
+                }
+
+                private CB_Player_Move cbMove;
+                public void SetCB_Move(CB_Player_Move cb) {
+                    if (this.cbMove == null) { this.cbMove = cb; } else { this.cbMove += cb; }
+                }
+
+                private CB_Player_MoveEnd cbMoveEnd;
+                public void SetCB_MoveEnd(CB_Player_MoveEnd cb) {
+                    if (this.cbMoveEnd == null) { this.cbMoveEnd = cb; } else { this.cbMoveEnd += cb; }
+                }
+
+                private CB_PLayer_Rotate cbRotate;
+                public void SetCB_Rotate(CB_PLayer_Rotate cb) {
+                    if (this.cbRotate == null) { this.cbRotate = cb; } else { this.cbRotate += cb; }
+                }
+
                 //------------------------------------------------------------------
                 // 移動処理関連変数
                 //------------------------------------------------------------------
@@ -222,7 +267,7 @@ namespace nangka
                 private float _fCameraX;
                 private float _fCameraY;
                 private float _fCameraZ;
-                private float[] _tableMoveDelta = { 2.0f, 1.0f, 0.5f, 0.25f, 0.25f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f };
+                private float[] _tableMoveDelta = { 0.5f, 0.25f, 0.125f, 0.0625f, 0.0625f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f };
 
                 //------------------------------------------------------------------
                 // 回転処理関連変数
@@ -324,20 +369,32 @@ namespace nangka
                     if (!this.IsMoving()) return;
 
                     float delta = this._tableMoveDelta[this._moveCount];
+                    Vector3 vecDelta = new Vector3(0.0f, 0.0f, 0.0f);
+
                     switch (this._moveDir)
                     {
-                        case Direction.NORTH: this._fCameraZ += delta; break;
-                        case Direction.SOUTH: this._fCameraZ -= delta; break;
-                        case Direction.WEST: this._fCameraX -= delta; break;
-                        case Direction.EAST: this._fCameraX += delta; break;
+                        case Direction.NORTH: vecDelta.z = delta; break;
+                        case Direction.SOUTH: vecDelta.z = -delta; break;
+                        case Direction.WEST: vecDelta.x = -delta; break;
+                        case Direction.EAST: vecDelta.x = delta; break;
                         default: break;
                     }
+
+                    this._fCameraX += vecDelta.x * 4.0f;
+                    this._fCameraZ += vecDelta.z * 4.0f;
+
                     Vector3 pos = this.GetPos();
                     pos.x = this._fCameraX; pos.y = this._fCameraY; pos.z = this._fCameraZ;
                     this.SetPos(pos);
 
+                    // 移動中コールバック
+                    if (this.cbMove != null) { this.cbMove(vecDelta); }
+
                     if (++this._moveCount >= this._tableMoveDelta.Length)
                     {
+                        // 移動終了コールバック
+                        if (this.cbMoveEnd != null) { this.cbMoveEnd(); }
+
                         this._moveCount = 0;
                         this._bMoving = false;
                     }
@@ -350,6 +407,9 @@ namespace nangka
                     float delta = this._tableRotDelta[this._rotCount];
                     this._fAngle += delta * (this._bRotMinus ? -1.0f : 1.0f);
                     this.SetCameraAngleY(this._fAngle);
+
+                    // 回転中コールバック
+                    if (this.cbRotate != null) { this.cbRotate(this._fAngle); }
 
                     if (++this._rotCount >= this._tableRotDelta.Length)
                     {

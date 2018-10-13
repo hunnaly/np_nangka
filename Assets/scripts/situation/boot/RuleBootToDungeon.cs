@@ -40,6 +40,7 @@ namespace nangka {
                 {
                     yield return Utility.RegistEntityTextureResources();
                     yield return Utility.RegistEntityFrame();
+                    yield return Utility.RegistEntityMiniMap();
 
                     yield return Utility.RegistEntityMapData();
                     IEntityMapData iMapData = Utility.GetIEntityMapData();

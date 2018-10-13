@@ -37,6 +37,10 @@ namespace nangka
 
             private DungeonBuilder builder;
 
+            private int movePreX;
+            private int movePreY;
+            private Vector3 vecMoveDelta;
+
             public void Run()
             {
                 if (!this.IsReadyLogic()) return;
@@ -156,8 +160,23 @@ namespace nangka
                 playerData.SetPos(x, y);
                 playerData.SetDirection(dir);
 
+                // 初期位置に踏破フラグをたてる
+                IEntityMapData iMapData = Utility.GetIEntityMapData();
+                iMapData.Through(x, y);
+
                 IEntityPlayer iPlayer = Utility.GetIEntityPlayer();
+                iPlayer.SetCB_MoveStart(this.CB_Player_MoveStart);
+                iPlayer.SetCB_Move(this.CB_Player_Move);
+                iPlayer.SetCB_MoveEnd(this.CB_Player_MoveEnd);
+                iPlayer.SetCB_Rotate(this.CB_Player_Rotate);
                 iPlayer.Prepare(Global.Instance.cameraPlayer, Global.Instance.objCameraPlayerBase, playerData);
+
+
+                // ミニマップに初期位置を反映
+                IEntityMiniMap iMiniMap = Utility.GetIEntityMiniMap();
+                iMiniMap.Flash(iMapData);
+                iMiniMap.Move(x, y, Vector3.zero);
+                iMiniMap.Rotate(Utility.DirectionToAngleY(dir));
 
                 yield return null;
             }
@@ -194,6 +213,50 @@ namespace nangka
                         iPlayer.MoveBack();
                     }
                 }
+            }
+
+            //------------------------------------------------------------------
+            // ミニマップ処理
+            // Player に連動させて処理を行っている。
+            //------------------------------------------------------------------
+
+            private void CB_Player_MoveStart(int xStart, int yStart, int xEnd, int yEnd)
+            {
+                this.movePreX = xStart;
+                this.movePreY = yStart;
+                this.vecMoveDelta = new Vector3(0.0f, 0.0f, 0.0f);
+
+                IEntityMapData iMapData = Utility.GetIEntityMapData();
+                iMapData.Through(xEnd, yEnd);
+
+                IEntityMiniMap iMiniMap = Utility.GetIEntityMiniMap();
+                iMiniMap.Flash(iMapData, xEnd, yEnd);
+            }
+
+            private void CB_Player_Move(Vector3 delta)
+            {
+                this.vecMoveDelta.x += delta.x * 20.0f;
+                this.vecMoveDelta.y += delta.z * 20.0f;
+
+                IEntityMiniMap iMiniMap = Utility.GetIEntityMiniMap();
+                iMiniMap.Move(this.movePreX, this.movePreY, this.vecMoveDelta);
+            }
+
+            private void CB_Player_MoveEnd()
+            {
+                this.vecMoveDelta = Vector3.zero;
+
+                IEntityPlayer iPlayer = Utility.GetIEntityPlayer();
+                PlayerData playerData = iPlayer.GetPlayerData();
+
+                IEntityMiniMap iMiniMap = Utility.GetIEntityMiniMap();
+                iMiniMap.Move(playerData.x, playerData.y, this.vecMoveDelta);
+            }
+
+            private void CB_Player_Rotate(float fAngle)
+            {
+                IEntityMiniMap iMiniMap = Utility.GetIEntityMiniMap();
+                iMiniMap.Rotate(fAngle);
             }
 
 

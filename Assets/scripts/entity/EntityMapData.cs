@@ -69,6 +69,9 @@ namespace nangka
             bool IsMovable(int x, int y, Direction dir);
             bool IsOutOfRange(int x, int y);
 
+            void Through(int x, int y, bool bThrough = true);
+            bool IsThorough(int x, int y);
+
         } //interface IEntityMapData
 
 
@@ -222,6 +225,22 @@ namespace nangka
                 return (x < 0 || y < 0 || x >= this._data.width || y >= this._data.height) ? true : false;
             }
 
+            public void Through(int x, int y, bool bThrough = true)
+            {
+                if (this.IsOutOfRange(x, y)) return;
+
+                int idx = y * this._data.width + x;
+                this.tableData[idx].bThrough = bThrough;
+            }
+
+            public bool IsThorough(int x, int y)
+            {
+                if (this.IsOutOfRange(x, y)) return false;
+
+                int idx = y * this._data.width + x;
+                return this.tableData[idx].bThrough;
+            }
+
 
             //------------------------------------------------------------------
             // ダミー処理
@@ -252,6 +271,7 @@ namespace nangka
                     this.tableData[i] = new BlockData();
                     this.tableData[i].idTip = new byte[(int)Direction.SOLID_MAX];
                     this.tableData[i].collision = 0;
+                    this.tableData[i].bThrough = false;
                 }
                 //   0   1   2   3   4   5   6   7
                 // +---+---+---+---+---+---+---+---+
@@ -383,6 +403,9 @@ namespace nangka
                 // Direction.* bit目の On/Off で障壁あり/なしをあらわす
                 // Direction.PLANE_MAX 分(平面方向のみ)の情報をもつ
                 public uint collision;
+
+                // 踏破済みかどうか
+                public bool bThrough;
 
             } //class BlockData
 

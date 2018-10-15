@@ -4,7 +4,8 @@ using UnityEngine;
 using np;
 using nangka.entity;
 using nangka.situation;
-using nangka.situation.dungeon;
+using nangka.situation.dev.mapeditor;
+using nangka.utility;
 
 namespace nangka
 {
@@ -17,36 +18,67 @@ namespace nangka
             {
                 public bool CheckRule()
                 {
-                    //Debug.Log("RuleDevEntranceToMapEditor.CheckRule()");
-
-                    return false;
-                    // Boot Entity インタフェースの取得
-                    //NpEntity entity = Global.Instance.EntityCtrl.Exist("np.entity.EntityBoot");
-                    //IEntityBoot iEntityBoot = entity.GetInterface<EntityBoot, IEntityBoot>();
-
-                    // Boot 処理が完了しているかチェック
-                    //return iEntityBoot.IsCompleted();
+                    IEntityDevEntrance iDevEntrance = Utility.GetIEntityDevEntrance();
+                    DEV_ITEM selected = iDevEntrance.GetSelected();
+                    return (selected == DEV_ITEM.MAP_EDITOR);
                 }
 
                 public void ReadyNextSituation()
                 {
                     Debug.Log("RuleDevEntranceToMapEditor.ReadyNextSituation()");
 
-                    // Boot Entity を終了させる
-                    // （終了すると自動的に登録解除される）
-                    //NpEntity entity = Global.Instance.EntityCtrl.Exist("np.entity.EntityBoot");
-                    //IEntityBoot iEntityBoot = entity.GetInterface<EntityBoot, IEntityBoot>();
-                    //iEntityBoot.Terminate();
-
-                    // Battle Entity の登録
-                    //Global.Instance.EntityCtrl.CreateAndRegist<EntityBattle>();
-
-                    //this.nextSituation = NpSituation.Create<SituationBattle>();
+                    Utility.StartCoroutine(this.Ready());
                 }
 
                 public void CleanUpForce()
                 {
                     Debug.Log("RuleDevEntranceToMapEditor.CleanUpForce()");
+                }
+
+                private IEnumerator Ready()
+                {
+                    // 画面をフェードアウト
+                    yield return Utility.FadeOut(1.0f);
+
+                    // DevEntrance Entity を終了させる
+                    // （終了すると自動的に登録解除される）
+                    IEntityDevEntrance iDevEntrance = Utility.GetIEntityDevEntrance();
+                    iDevEntrance.Terminate();
+
+                    // DevEntrance に入るときに見えなくしていたダンジョン用カメラをもとにもどす
+                    Global.Instance.cameraPlayer.enabled = true;
+
+                    // 各種 Entity の登録および利用準備待ち
+                    yield return ReadyEntities();
+
+                    // フェードイン
+                    yield return Utility.FadeIn();
+
+                    // ダンジョン処理開始
+                    IEntityDungeon iDungeon = Utility.GetIEntityDungeon();
+                    iDungeon.Run();
+
+                    // 次の Situation を登録
+                    this.nextSituation = NpSituation.Create<SituationMapEditor>();
+                    yield return null;
+                }
+
+                private IEnumerator ReadyEntities()
+                {
+                    yield return Utility.RegistEntityTextureResources();
+                    yield return Utility.RegistEntityFrame();
+                    yield return Utility.RegistEntityMiniMap();
+
+                    yield return Utility.RegistEntityMapData();
+                    IEntityMapData iMapData = Utility.GetIEntityMapData();
+                    iMapData.Load(Utility.GetIEntityTextureResources());
+
+                    yield return Utility.RegistEntityStructure();
+                    yield return Utility.RegistEntityPlayerData();
+                    yield return Utility.RegistEntityPlayer();
+                    yield return Utility.RegistEntityDungeon();
+
+                    yield return Utility.RegistEntityMapEditorConsole();
                 }
             }
 

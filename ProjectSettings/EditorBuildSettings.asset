@@ -17,4 +17,7 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/scene/ui_dev_entrance.unity
     guid: bf960ddc6c268d8408d65c734b260ea9
+  - enabled: 1
+    path: Assets/scene/ui_mapeditor_console.unity
+    guid: 2db052fe33d5e69428960d8edc89ee62
   m_configObjects: {}

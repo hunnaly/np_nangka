@@ -186,6 +186,9 @@ namespace nangka {
 
             public static IEnumerator RegistEntityDevEntrance() { yield return RegistEntity<EntityDevEntrance, IEntityDevEntrance>(Define.ENTITY_CNAME_DEV_ENTRANCE); }
             public static IEntityDevEntrance GetIEntityDevEntrance() { return GetInterface<EntityDevEntrance, IEntityDevEntrance>(Define.ENTITY_CNAME_DEV_ENTRANCE); }
+
+            public static IEnumerator RegistEntityMapEditorConsole() { yield return RegistEntity<EntityMapEditorConsole, IEntityMapEditorConsole>(Define.ENTITY_CNAME_MAPEDITOR_CONSOLE); }
+            public static IEntityMapEditorConsole GetIEntityMapEditorConsole() { return GetInterface<EntityMapEditorConsole, IEntityMapEditorConsole>(Define.ENTITY_CNAME_MAPEDITOR_CONSOLE); }
         }
 
     } //namespace utility

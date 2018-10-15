@@ -16,6 +16,7 @@ namespace nangka {
         public static string SCENE_NAME_FADE = "ui_fade";
         public static string SCENE_NAME_FRAME = "ui_frame";
         public static string SCENE_NAME_DEV_ENTRANCE = "ui_dev_entrance";
+        public static string SCENE_NAME_MAPEDITOR_CONSOLE = "ui_mapeditor_console";
 
 
         //----------------------------------------------------------------
@@ -33,6 +34,7 @@ namespace nangka {
         public static string ENTITY_CNAME_MINIMAP = ENTITY_PATH + "EntityMiniMap";
 
         public static string ENTITY_CNAME_DEV_ENTRANCE = ENTITY_PATH + "EntityDevEntrance";
+        public static string ENTITY_CNAME_MAPEDITOR_CONSOLE = ENTITY_PATH + "EntityMapEditorConsole";
 
 
         //----------------------------------------------------------------

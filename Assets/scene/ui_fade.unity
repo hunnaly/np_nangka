@@ -244,8 +244,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0e1710358473794438e844a126e7ec49, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  objectTable:
-  - {fileID: 1656698024}
 --- !u!114 &954201206
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -301,7 +299,7 @@ Canvas:
   m_SortingBucketNormalizedSize: 0
   m_AdditionalShaderChannelsFlag: 0
   m_SortingLayerID: 0
-  m_SortingOrder: 0
+  m_SortingOrder: 10
   m_TargetDisplay: 0
 --- !u!224 &954201209
 RectTransform:

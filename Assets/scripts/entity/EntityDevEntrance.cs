@@ -128,8 +128,7 @@ namespace nangka
                 // 二重選択禁止チェック
                 if (this.IsSelected()) return;
 
-                // まだ処理がないので、二重選択禁止チェックにひっかからないようにコメントアウトしておく
-                //this._selected = DEV_ITEM.MAP_EDITOR;
+                this._selected = DEV_ITEM.MAP_EDITOR;
             }
 
             public void OnClickButtonDungeonTest()

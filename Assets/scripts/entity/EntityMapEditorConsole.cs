@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using UnityEngine.UI;
 using np;
 using nangka.utility;
 
@@ -10,13 +11,31 @@ namespace nangka
 {
     namespace entity
     {
+        //------------------------------------------------------------------
+        // CONSOLE_MODE
+        //------------------------------------------------------------------
         public enum CONSOLE_MODE
         {
-            INVALIDATE,
-            HIDDEN,
-            MAIN
+            INVALIDATE, // 無効なモード（モード変更検出処理において未変更を表す値）
+
+            HIDDEN,     // コンソールが隠れている状態（初期状態）
+            MAIN        // メインコンソールが表示され操作可能な状態
 
         } //enum CONSOLE_MODE
+
+        //------------------------------------------------------------------
+        // MAIN_CONSOLE_ITEM
+        //------------------------------------------------------------------
+        public enum MAIN_CONSOLE_ITEM : int
+        {
+            MAP_NEW,        // 新規マップ作成
+            MAP_LOAD,       // 既存のマップをロード
+            MAP_SAVE,       // 編集中のマップをセーブ
+            NAVI_SWITCH,    // ナビゲーションウィンドウの表示切替
+            RETURN_TO_DEV,  // 開発エントランスへ戻る
+
+            MAX
+        } //enum MAIN_CONSOLE_ITEM
 
 
         //------------------------------------------------------------------
@@ -46,24 +65,6 @@ namespace nangka
 
             private CONSOLE_MODE _mode;
             private CONSOLE_MODE _tempMode;
-            private bool IsDetectedModeChange() { return (this._mode != this._tempMode); }
-
-            public CONSOLE_MODE GetDetectedMode()
-            {
-                CONSOLE_MODE mode = CONSOLE_MODE.INVALIDATE;
-                if (this.IsReadyLogic() && this.IsDetectedModeChange()) mode = this._tempMode;
-                return mode;
-            }
-
-            public void ChangeMode()
-            {
-                if (this.IsReadyLogic() && this.IsDetectedModeChange())
-                {
-                    Debug.Log("ChangeMode "+this._mode+" to "+this._tempMode);
-                    this.ChangeMode(this._mode, this._tempMode);
-                    this._mode = this._tempMode;
-                }
-            }
 
             private delegate void EventProc();
             private EventProc funcEventProc;
@@ -74,9 +75,11 @@ namespace nangka
             private GameObject refObjNaviWindow;
             private GameObject refObjMainConsole;
 
+            private MAIN_CONSOLE_ITEM _selectItem;
+
 
             //------------------------------------------------------------------
-            // Entity メイン処理
+            // Entity ロジック処理
             //------------------------------------------------------------------
 
             protected override bool StartProc()
@@ -111,7 +114,7 @@ namespace nangka
             }
 
             //------------------------------------------------------------------
-            // ロジック準備処理
+            // ロジック内部処理
             //------------------------------------------------------------------
 
             private IEnumerator ReadyLogic()
@@ -129,6 +132,8 @@ namespace nangka
                 this._tempMode = CONSOLE_MODE.HIDDEN;
                 this.funcEventProc = this.EventProc_Hidden;
 
+                this.Select(MAIN_CONSOLE_ITEM.MAP_NEW);
+
                 this._bReadyLogic = true;
                 yield return null;
             }
@@ -140,10 +145,6 @@ namespace nangka
                 this._bTerminating = false;
             }
 
-            //------------------------------------------------------------------
-            // ロジック更新処理
-            //------------------------------------------------------------------
-
             private void UpdateLogic()
             {
                 if (!this.IsReadyLogic()) return;
@@ -152,7 +153,7 @@ namespace nangka
             }
 
             //------------------------------------------------------------------
-            // イベント処理
+            // 各モードごとのイベント処理
             //------------------------------------------------------------------
 
             private void EventProc_Hidden()
@@ -169,11 +170,70 @@ namespace nangka
                 {
                     this._tempMode = CONSOLE_MODE.HIDDEN;
                 }
+                else if (Input.GetKeyDown(KeyCode.UpArrow))
+                {
+                    this.SelectUp();
+                }
+                else if (Input.GetKeyDown(KeyCode.DownArrow))
+                {
+                    this.SelectDown();
+                }
             }
 
             //------------------------------------------------------------------
-            // モード変更処理
+            // メインコンソール操作処理
             //------------------------------------------------------------------
+
+            private void Select(MAIN_CONSOLE_ITEM item)
+            {
+                this.SwitchCursor(this._selectItem, false);
+                this.SwitchCursor(item, true);
+                this._selectItem = item;
+            }
+
+            private void SelectUp()
+            {
+                int temp = (int)this._selectItem - 1;
+                if (temp < 0) temp = (int)MAIN_CONSOLE_ITEM.MAX - 1;
+                MAIN_CONSOLE_ITEM item = (MAIN_CONSOLE_ITEM)(temp % (int)MAIN_CONSOLE_ITEM.MAX);
+                this.Select(item);
+            }
+
+            private void SelectDown()
+            {
+                MAIN_CONSOLE_ITEM item = (MAIN_CONSOLE_ITEM)(((int)this._selectItem + 1) % (int)MAIN_CONSOLE_ITEM.MAX);
+                this.Select(item);
+            }
+
+            private void SwitchCursor(MAIN_CONSOLE_ITEM item, bool bOn)
+            {
+                var component = this.refObjMainConsole.GetComponent<ObjectTable>();
+                Image image = component.objectTable[(int)item].GetComponent<Image>();
+                image.color = new Color(255.0f, 255.0f, (bOn ? 0.0f : 255.0f), 255.0f);
+            }
+
+            //------------------------------------------------------------------
+            // モード変更関連処理
+            //------------------------------------------------------------------
+
+            private bool IsDetectedModeChange() { return (this._mode != this._tempMode); }
+
+            public CONSOLE_MODE GetDetectedMode()
+            {
+                CONSOLE_MODE mode = CONSOLE_MODE.INVALIDATE;
+                if (this.IsReadyLogic() && this.IsDetectedModeChange()) mode = this._tempMode;
+                return mode;
+            }
+
+            public void ChangeMode()
+            {
+                if (this.IsReadyLogic() && this.IsDetectedModeChange())
+                {
+                    Debug.Log("ChangeMode " + this._mode + " to " + this._tempMode);
+                    this.ChangeMode(this._mode, this._tempMode);
+                    this._mode = this._tempMode;
+                }
+            }
 
             private void ChangeMode(CONSOLE_MODE fromMode, CONSOLE_MODE toMode)
             {

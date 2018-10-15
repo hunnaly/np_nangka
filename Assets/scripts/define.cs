@@ -1,5 +1,6 @@
 ﻿
-namespace nangka {
+namespace nangka
+{
 
     // Game ロジック用の定義
     public sealed class Define

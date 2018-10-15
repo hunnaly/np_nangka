@@ -30,6 +30,10 @@ namespace nangka
                         IEntityMapEditorConsole iMeConsole = Utility.GetIEntityMapEditorConsole();
                         iMeConsole.ChangeMode();
 
+                        // Dungeon 処理を復帰
+                        IEntityDungeon iDungeon = Utility.GetIEntityDungeon();
+                        iDungeon.Pause(false);
+
                         // 次の Situation を登録
                         this.nextSituation = NpSituation.Create<SituationMapEditor>();
                     }

@@ -11,38 +11,6 @@ namespace nangka
 {
     namespace entity
     {
-        //------------------------------------------------------------------
-        // PlayerData
-        //------------------------------------------------------------------
-        public class PlayerData
-        {
-            private int _x;
-            public int x { get { return this._x; } }
-
-            private int _y;
-            public int y { get { return this._y; } }
-
-            private Direction _dir;
-            public Direction dir { get { return this._dir; } }
-
-
-            //------------------------------------------------------------------
-            // 各種設定メソッド
-            //------------------------------------------------------------------
-
-            public void SetPos(int x, int y) { this._x = x; this._y = y; }
-            public void SetDirection(Direction dir) { this._dir = dir; }
-
-            // リセット処理
-            public void Reset()
-            {
-                this._x = 0;
-                this._y = 0;
-                this._dir = 0;
-            }
-
-        } //class PlayerData
-
 
         //------------------------------------------------------------------
         // IEntityPlayerData
@@ -50,12 +18,16 @@ namespace nangka
         public interface IEntityPlayerData : IEntity
         {
             void Reset();
+            bool IsLoaded();
 
-            PlayerData GetPlayerData();
-            void LoadPlayerData();
-            /*
-            void SavePlayerData();
-            */
+            MAP_ID GetMapID();
+            int GetX();
+            int GetY();
+            Direction GetDir();
+            void SetDir(Direction dir);
+            void SetPos(int x, int y);
+
+            EntityPlayerData GetOwnEntity();
 
         } //interface IEntityPlayerData
 
@@ -63,7 +35,8 @@ namespace nangka
         //------------------------------------------------------------------
         // EntityPlayerData
         //------------------------------------------------------------------
-        public class EntityPlayerData : NpEntity, IEntityPlayerData
+        public class EntityPlayerData : NpEntity, IEntityPlayerData,
+            EntityRecreator.IPlayerDataRecreator
         {
             //------------------------------------------------------------------
             // 準備処理関連変数
@@ -72,8 +45,70 @@ namespace nangka
             private bool _bReadyLogic;
             public bool IsReadyLogic() { return this._bReadyLogic; }
 
-            private PlayerData _data;
-            public PlayerData GetPlayerData() { return this._data; }
+
+            private bool _bRecreating;
+
+            private bool _bLoaded;
+            public bool IsLoaded() { return this._bLoaded; }
+
+            private MAP_ID _idMap;
+            public MAP_ID GetMapID() { return this._idMap; }
+
+            private int _x;
+            private int _y;
+            public int GetX() { return this._x; }
+            public int GetY() { return this._y; }
+            public void SetPos(int x, int y) { this._x = x; this._y = y; }
+
+            private Direction _dir;
+            public Direction GetDir() { return this._dir; }
+            public void SetDir(Direction dir) { this._dir = dir; }
+
+            public EntityPlayerData GetOwnEntity() { return this; }
+
+
+            //------------------------------------------------------------------
+            // データ設定メソッド（EntityNewCreator用）
+            //------------------------------------------------------------------
+
+            void EntityRecreator.IPlayerDataRecreator.Begin()
+            {
+                if (this._bRecreating) return;
+
+                this.Reset();
+
+                this._bRecreating = true;
+                this._bLoaded = false;
+            }
+
+            void EntityRecreator.IPlayerDataRecreator.SetMap(MAP_ID id)
+            {
+                if (this._bRecreating == false) return;
+
+                this._idMap = id;
+            }
+
+            void EntityRecreator.IPlayerDataRecreator.SetPos(int x, int y)
+            {
+                if (this._bRecreating == false) return;
+
+                this.SetPos(x, y);
+            }
+
+            void EntityRecreator.IPlayerDataRecreator.SetDir(Direction dir)
+            {
+                if (this._bRecreating == false) return;
+
+                this.SetDir(dir);
+            }
+
+            void EntityRecreator.IPlayerDataRecreator.End()
+            {
+                if (this._bRecreating == false) return;
+
+                this._bRecreating = false;
+                this._bLoaded = true;
+            }
 
 
             //------------------------------------------------------------------
@@ -83,9 +118,6 @@ namespace nangka
             protected override bool StartProc()
             {
                 Debug.Log("EntityPlayerData.StartProc()");
-
-                // TODO: 例外エラー対応が必要
-                this._data = new PlayerData();
 
                 this._bReadyLogic = true;
                 return true;
@@ -101,31 +133,15 @@ namespace nangka
 
             protected override void CleanUp()
             {
-                this._data = null;
             }
 
             public void Reset()
             {
                 if (!this.IsReadyLogic()) return;
 
-                this._data.Reset();
-            }
-
-            //------------------------------------------------------------------
-            // PlayerData 関連
-            //------------------------------------------------------------------
-
-            public void LoadPlayerData(/*セーブデータ指定*/)
-            {
-                if (!this.IsReadyLogic()) return;
-
-                this.LoadDummyPlayerData();
-            }
-
-            private void LoadDummyPlayerData()
-            {
-                this._data.SetPos(0, 0);
-                this._data.SetDirection(Direction.EAST);
+                this._x = 0;
+                this._y = 0;
+                this._dir = 0;
             }
 
         } //class EntityPlayerData

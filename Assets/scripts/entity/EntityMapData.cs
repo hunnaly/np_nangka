@@ -1,5 +1,7 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using np;
 using nangka.utility;
@@ -10,60 +12,17 @@ namespace nangka
     {
 
         //------------------------------------------------------------------
-        // MapData
-        //------------------------------------------------------------------
-        public class MapData
-        {
-            private string _name;
-            public string name { get { return this._name; } }
-
-            private int _width;
-            public int width { get { return this._width; } }
-
-            private int _height;
-            public int height { get { return this._height; } }
-
-            private int _startX;
-            public int startX { get { return this._startX; } }
-
-            private int _startY;
-            public int startY { get { return this._startY; } }
-
-            private Direction _startDir;
-            public Direction startDir { get { return this._startDir; } }
-
-
-            //------------------------------------------------------------------
-            // 各種設定メソッド
-            //------------------------------------------------------------------
-
-            public void SetName(string name) { this._name = name; }
-            public void SetSize(int w, int h) { this._width = w; this._height = h; }
-            public void SetStartData(int x, int y, Direction dir) { this._startX = x; this._startY = y; this._startDir = dir; }
-
-            // リセット処理
-            public void Reset()
-            {
-                this._name = "";
-                this._width = 0;
-                this._height = 0;
-                this._startX = 0;
-                this._startY = 0;
-                this._startDir = 0;
-            }
-
-        } //class MapData
-
-
-        //------------------------------------------------------------------
         // IEntityMapData
         //------------------------------------------------------------------
         public interface IEntityMapData : IEntity
         {
-            void Load(IEntityTextureResources iTexRes);
             void Reset();
 
-            MapData GetMapData();
+            bool IsLoaded();
+            string GetName();
+            int GetWidth();
+            int GetHeight();
+
             Texture[] GetBlockTexture(int x, int y);
             Texture GetTexture(int x, int y, Direction dir);
             bool IsMovable(int x, int y, Direction dir);
@@ -72,13 +31,16 @@ namespace nangka
             void Through(int x, int y, bool bThrough = true);
             bool IsThorough(int x, int y);
 
+            EntityMapData GetOwnEntity();
+
         } //interface IEntityMapData
 
 
         //------------------------------------------------------------------
         // EntityMapData
         //------------------------------------------------------------------
-        public class EntityMapData : NpEntity, IEntityMapData
+        public class EntityMapData : NpEntity, IEntityMapData,
+            EntityRecreator.IMapDataRecreator
         {
             //------------------------------------------------------------------
             // 準備処理関連変数
@@ -87,13 +49,86 @@ namespace nangka
             private bool _bReadyLogic;
             public bool IsReadyLogic() { return this._bReadyLogic; }
 
-            private MapData _data;
-            public MapData GetMapData() { return this._data; }
+
+            private bool _bRecreating;
+            
+            private bool _bLoaded;
+            public bool IsLoaded() { return this._bLoaded; }
+            
+            private string _name;
+            public string GetName() { return this._name; }
+
+            private int _width;
+            public int GetWidth() { return this._width; }
+
+            private int _height;
+            public int GetHeight() { return this._height; }
 
             private Dictionary<byte, string> tableTexturePath;
             private Dictionary<byte, Texture> tableTexture; // 0 => null をダミー値としてもたせる
             private BlockData[] tableData;
+            private bool[] tableThrough;
 
+            public EntityMapData GetOwnEntity() { return this; }
+
+
+            //------------------------------------------------------------------
+            // データ設定メソッド（EntityNewCreator用）
+            //------------------------------------------------------------------
+
+            void EntityRecreator.IMapDataRecreator.Begin(string name, int width, int height)
+            {
+                if (this._bRecreating) return;
+
+                this.Reset();
+
+                this._bRecreating = true;
+                this._bLoaded = false;
+
+                this._name = name;
+                this._width = width;
+                this._height = height;
+
+                int num = this._width * this._height;
+                this.tableData = new BlockData[num];
+                this.tableThrough = new bool[num];
+            }
+
+            void EntityRecreator.IMapDataRecreator.AddTexture(byte id, string path)
+            {
+                if (this._bRecreating == false) return;
+                if (this.tableTexturePath == null) return;
+                if (id == 0) return;
+
+                this.tableTexturePath.Add(id, path);
+            }
+
+            void EntityRecreator.IMapDataRecreator.SetBlock(int idx, BlockData data)
+            {
+                if (this._bRecreating == false) return;
+                if (this.tableData == null) return;
+                if (idx < 0 || idx >= this._width * this._height) return;
+
+                this.tableData[idx] = data;
+            }
+
+            void EntityRecreator.IMapDataRecreator.End()
+            {
+                if (this._bRecreating == false) return;
+
+                if (this.tableTexturePath != null && this.tableTexture != null)
+                {
+                    IEntityTextureResources iTexRes = Utility.GetIEntityTextureResources();
+                    foreach (KeyValuePair<byte, string> pair in this.tableTexturePath)
+                    {
+                        Texture tex = iTexRes.Load(pair.Value);
+                        this.tableTexture.Add(pair.Key, tex);
+                    }
+                }
+
+                this._bLoaded = true;
+                this._bRecreating = false;
+            }
 
 
             //------------------------------------------------------------------
@@ -105,7 +140,6 @@ namespace nangka
                 Debug.Log("EntityMapData.StartProc()");
 
                 // TODO: 例外エラー対応が必要
-                this._data = new MapData();
                 this.tableTexturePath = new Dictionary<byte, string>();
                 this.tableTexture = new Dictionary<byte, Texture>();
                 this.tableTexture.Add(0, null);
@@ -124,30 +158,28 @@ namespace nangka
 
             protected override void CleanUp()
             {
+                this.ClearThroughTable();
+                this.tableThrough = null;
+
                 this.ClearBlockTable();
                 this.tableData = null;
 
                 this.ClearTextureTable();
                 this.tableTexturePath = null;
                 this.tableTexture = null;
-
-                this._data = null;
             }
 
             //------------------------------------------------------------------
             // ロジック準備処理／ロジックリセット処理
             //------------------------------------------------------------------
 
-            public void Load(IEntityTextureResources iTexRes)
-            {
-                if (!this.IsReadyLogic()) return;
-
-                this.SetDummyData(iTexRes);
-            }
-
             public void Reset()
             {
                 if (!this.IsReadyLogic()) return;
+
+                // 踏破情報
+                this.ClearThroughTable();
+                this.tableThrough = null;
 
                 // コリジョン情報とデザイン情報
                 this.ClearBlockTable();
@@ -157,7 +189,17 @@ namespace nangka
                 this.ClearTextureTable();
 
                 // 基本情報
-                this._data.Reset();
+                this._bRecreating = false;
+                this._bLoaded = false;
+                this._name = "";
+                this._width = 0;
+                this._height = 0;
+            }
+
+            private void ClearThroughTable()
+            {
+                if (this.tableThrough == null) return;
+                for (int i = 0; i < this.tableThrough.Length; i++) { this.tableThrough[i] = false; }
             }
 
             private void ClearBlockTable()
@@ -208,7 +250,7 @@ namespace nangka
             }
             private Texture GetTextureReal(int x, int y, Direction dir)
             {
-                int idx = y * this._data.width + x;
+                int idx = y * this._width + x;
                 return this.tableTexture[this.tableData[idx].idTip[(int)dir]];
             }
 
@@ -216,185 +258,36 @@ namespace nangka
             {
                 if (this.IsOutOfRange(x, y)) return false;
 
-                int idx = y * this._data.width + x;
+                int idx = y * this._width + x;
                 return ((this.tableData[idx].collision & (1 << (int)dir)) == 0);
             }
 
             public bool IsOutOfRange(int x, int y)
             {
-                return (x < 0 || y < 0 || x >= this._data.width || y >= this._data.height) ? true : false;
+                return (x < 0 || y < 0 || x >= this._width || y >= this._height) ? true : false;
             }
 
             public void Through(int x, int y, bool bThrough = true)
             {
                 if (this.IsOutOfRange(x, y)) return;
 
-                int idx = y * this._data.width + x;
-                this.tableData[idx].bThrough = bThrough;
+                int idx = y * this._width + x;
+                this.tableThrough[idx] = bThrough;
             }
 
             public bool IsThorough(int x, int y)
             {
                 if (this.IsOutOfRange(x, y)) return false;
 
-                int idx = y * this._data.width + x;
-                return this.tableData[idx].bThrough;
+                int idx = y * this._width + x;
+                return this.tableThrough[idx];
             }
-
-
-            //------------------------------------------------------------------
-            // ダミー処理
-            //------------------------------------------------------------------
-
-            // 仮データ
-            private void SetDummyData(IEntityTextureResources iTexRes)
-            {
-                // 基本情報
-                this._data.SetName("dummy");
-                this._data.SetSize(8, 8);
-                this._data.SetStartData(0, 0, Direction.EAST);
-
-                // テクスチャ情報
-                Texture tex = iTexRes.Load(Define.RES_PATH_TEXTURE_WALL_BRICK_CEILING);
-                this.tableTexturePath.Add(1, Define.RES_PATH_TEXTURE_WALL_BRICK_CEILING);
-                this.tableTexture.Add(1, tex);
-
-                tex = iTexRes.Load(Define.RES_PATH_TEXTURE_WALL_BRICK_SIDEWALL);
-                this.tableTexturePath.Add(2, Define.RES_PATH_TEXTURE_WALL_BRICK_SIDEWALL);
-                this.tableTexture.Add(2, tex);
-
-                // コリジョン情報とデザイン情報
-                int num = this._data.width * this._data.height;
-                this.tableData = new BlockData[num];
-                for (int i = 0; i < num; i++)
-                {
-                    this.tableData[i] = new BlockData();
-                    this.tableData[i].idTip = new byte[(int)Direction.SOLID_MAX];
-                    this.tableData[i].collision = 0;
-                    this.tableData[i].bThrough = false;
-                }
-                //   0   1   2   3   4   5   6   7
-                // +---+---+---+---+---+---+---+---+
-                //0| @                             |
-                // +---+---+---+---+---+---+---+   +
-                //1|   |   |                   |   |
-                // +   +   +   +---+   +---+---+   +
-                //2|   |           |   |       |   |
-                // +   +   +---+---+   +---+   +   +
-                //3|   |       |           |   |   |
-                // +   +   +   +   +   +---+   +   +
-                //4|   |   |   |   |   |       |   |
-                // +   +---+   +   +---+   +---+   +
-                //5|           |               |   |
-                // +   +   +   +---+---+   +   +   +
-                //6|               |   |           |
-                // +   +   +   +---+   +---+---+   +
-                //7|           |                   |
-                // +---+---+---+---+---+---+---+---+
-
-                this.DSetBlock(this.tableData[0], 2, 0, 2, 2, 1, 1, true, false, true, true);
-                this.DSetBlock(this.tableData[1], 2, 0, 2, 0, 1, 1, true, false, true, false);
-                this.DSetBlock(this.tableData[2], 2, 0, 2, 0, 1, 1, true, false, true, false);
-                this.DSetBlock(this.tableData[3], 2, 0, 2, 0, 1, 1, true, false, true, false);
-                this.DSetBlock(this.tableData[4], 2, 0, 2, 0, 1, 1, true, false, true, false);
-                this.DSetBlock(this.tableData[5], 2, 0, 2, 0, 1, 1, true, false, true, false);
-                this.DSetBlock(this.tableData[6], 2, 0, 2, 0, 1, 1, true, false, true, false);
-                this.DSetBlock(this.tableData[7], 2, 2, 0, 0, 1, 1, true, true, false, false);
-
-                this.DSetBlock(this.tableData[8], 2, 2, 0, 2, 1, 1, true, true, false, true);
-                this.DSetBlock(this.tableData[9], 2, 2, 0, 2, 1, 1, true, true, false, true);
-                this.DSetBlock(this.tableData[10], 2, 0, 0, 2, 1, 1, true, false, false, true);
-                this.DSetBlock(this.tableData[11], 2, 0, 2, 0, 1, 1, true, false, true, false);
-                this.DSetBlock(this.tableData[12], 2, 0, 0, 0, 1, 1, true, false, false, false);
-                this.DSetBlock(this.tableData[13], 2, 0, 2, 0, 1, 1, true, false, true, false);
-                this.DSetBlock(this.tableData[14], 2, 2, 2, 0, 1, 1, true, true, true, false);
-                this.DSetBlock(this.tableData[15], 0, 2, 0, 2, 1, 1, false, true, false, true);
-
-                this.DSetBlock(this.tableData[16], 0, 2, 0, 2, 1, 1, false, true, false, true);
-                this.DSetBlock(this.tableData[17], 0, 0, 0, 2, 1, 1, false, false, false, true);
-                this.DSetBlock(this.tableData[18], 0, 0, 2, 0, 1, 1, false, false, true, false);
-                this.DSetBlock(this.tableData[19], 2, 2, 2, 0, 1, 1, true, true, true, false);
-                this.DSetBlock(this.tableData[20], 0, 2, 0, 2, 1, 1, false, true, false, true);
-                this.DSetBlock(this.tableData[21], 2, 0, 2, 2, 1, 1, true, false, true, true);
-                this.DSetBlock(this.tableData[22], 2, 2, 0, 0, 1, 1, true, true, false, false);
-                this.DSetBlock(this.tableData[23], 0, 2, 0, 2, 1, 1, false, true, false, true);
-
-                this.DSetBlock(this.tableData[24], 0, 2, 0, 2, 1, 1, false, true, false, true);
-                this.DSetBlock(this.tableData[25], 0, 0, 0, 2, 1, 1, false, false, false, true);
-                this.DSetBlock(this.tableData[26], 2, 2, 0, 0, 1, 1, true, true, false, false);
-                this.DSetBlock(this.tableData[27], 2, 0, 0, 2, 1, 1, true, false, false, true);
-                this.DSetBlock(this.tableData[28], 0, 0, 0, 0, 1, 1, false, false, false, false);
-                this.DSetBlock(this.tableData[29], 2, 2, 2, 0, 1, 1, true, true, true, false);
-                this.DSetBlock(this.tableData[30], 0, 2, 0, 2, 1, 1, false, true, false, true);
-                this.DSetBlock(this.tableData[31], 0, 2, 0, 2, 1, 1, false, true, false, true);
-
-                this.DSetBlock(this.tableData[48], 0, 0, 0, 2, 1, 1, false, false, false, true);
-                this.DSetBlock(this.tableData[32], 0, 2, 0, 2, 1, 1, false, true, false, true);
-                this.DSetBlock(this.tableData[33], 0, 2, 2, 2, 1, 1, false, true, true, true);
-                this.DSetBlock(this.tableData[34], 0, 2, 0, 2, 1, 1, false, true, false, true);
-                this.DSetBlock(this.tableData[35], 0, 2, 0, 2, 1, 1, false, true, false, true);
-                this.DSetBlock(this.tableData[36], 0, 2, 2, 2, 1, 1, false, true, true, true);
-                this.DSetBlock(this.tableData[37], 2, 0, 0, 2, 1, 1, true, false, false, true);
-                this.DSetBlock(this.tableData[38], 0, 2, 2, 0, 1, 1, false, true, true, false);
-                this.DSetBlock(this.tableData[39], 0, 2, 0, 2, 1, 1, false, true, false, true);
-
-                this.DSetBlock(this.tableData[40], 0, 0, 0, 2, 1, 1, false, false, false, true);
-                this.DSetBlock(this.tableData[41], 2, 0, 0, 0, 1, 1, true, false, false, false);
-                this.DSetBlock(this.tableData[42], 0, 2, 0, 0, 1, 1, false, true, false, false);
-                this.DSetBlock(this.tableData[43], 0, 0, 2, 2, 1, 1, false, false, true, true);
-                this.DSetBlock(this.tableData[44], 2, 0, 2, 0, 1, 1, true, false, true, false);
-                this.DSetBlock(this.tableData[45], 0, 0, 0, 0, 1, 1, false, false, false, false);
-                this.DSetBlock(this.tableData[46], 2, 2, 0, 0, 1, 1, true, true, false, false);
-                this.DSetBlock(this.tableData[47], 0, 2, 0, 2, 1, 1, false, true, false, true);
-
-                this.DSetBlock(this.tableData[49], 0, 0, 0, 0, 1, 1, false, false, false, false);
-                this.DSetBlock(this.tableData[50], 0, 0, 0, 0, 1, 1, false, false, false, false);
-                this.DSetBlock(this.tableData[51], 2, 2, 2, 0, 1, 1, true, true, true, false);
-                this.DSetBlock(this.tableData[52], 2, 2, 0, 2, 1, 1, true, true, false, true);
-                this.DSetBlock(this.tableData[53], 0, 0, 2, 2, 1, 1, false, false, true, true);
-                this.DSetBlock(this.tableData[54], 0, 0, 2, 0, 1, 1, false, false, true, false);
-                this.DSetBlock(this.tableData[55], 0, 2, 0, 0, 1, 1, false, true, false, false);
-
-                this.DSetBlock(this.tableData[56], 0, 0, 2, 2, 1, 1, false, false, true, true);
-                this.DSetBlock(this.tableData[57], 0, 0, 2, 0, 1, 1, false, false, true, false);
-                this.DSetBlock(this.tableData[58], 0, 2, 2, 0, 1, 1, false, true, true, false);
-                this.DSetBlock(this.tableData[59], 2, 0, 2, 2, 1, 1, true, false, true, true);
-                this.DSetBlock(this.tableData[60], 0, 0, 2, 0, 1, 1, false, false, true, false);
-                this.DSetBlock(this.tableData[61], 2, 0, 2, 0, 1, 1, true, false, true, false);
-                this.DSetBlock(this.tableData[62], 2, 0, 2, 0, 1, 1, true, false, true, false);
-                this.DSetBlock(this.tableData[63], 0, 2, 2, 0, 1, 1, false, true, true, false);
-            }
-            private void DSetBlock(BlockData data,
-                byte n, byte e, byte s, byte w, byte u, byte d,
-                bool bn, bool be, bool bs, bool bw)
-            {
-                this.DSetDesign(data, n, e, s, w, u, d);
-                this.DSetCollision(data, bn, be, bs, bw);
-            }
-            private void DSetDesign(BlockData data, byte n, byte e, byte s, byte w, byte u, byte d)
-            {
-                data.idTip[(int)Direction.NORTH] = n;
-                data.idTip[(int)Direction.EAST] = e;
-                data.idTip[(int)Direction.SOUTH] = s;
-                data.idTip[(int)Direction.WEST] = w;
-                data.idTip[(int)Direction.UP] = u;
-                data.idTip[(int)Direction.DOWN] = d;
-            }
-            private void DSetCollision(BlockData data, bool n, bool e, bool s, bool w)
-            {
-                uint flag = 0;
-                if (n) flag |= (1 << (int)Direction.NORTH);
-                if (e) flag |= (1 << (int)Direction.EAST);
-                if (s) flag |= (1 << (int)Direction.SOUTH);
-                if (w) flag |= (1 << (int)Direction.WEST);
-                data.collision = flag;
-            }
-
 
             //------------------------------------------------------------------
             // BlockData
             //------------------------------------------------------------------
-            class BlockData
+            [Serializable]
+            public class BlockData : IDisposable
             {
                 // Direction.SOLID_MAX 個のテクスチャIDを格納する
                 // 各 Map ごとに 256種類まで利用可能
@@ -404,8 +297,36 @@ namespace nangka
                 // Direction.PLANE_MAX 分(平面方向のみ)の情報をもつ
                 public uint collision;
 
-                // 踏破済みかどうか
-                public bool bThrough;
+
+                //------------------------------------------------------------------
+                // Clone
+                //------------------------------------------------------------------
+                public BlockData Clone()
+                {
+                    BlockData data = null;
+                    using (data = new BlockData())
+                    {
+                        int tipSize = 0;
+                        if (this.idTip != null) tipSize = this.idTip.Length;
+                        if (tipSize > 0)
+                        {
+                            try { data.idTip = new byte[tipSize]; }
+                            catch { data = null; }
+                        }
+
+                        Array.Copy(this.idTip, data.idTip, tipSize);
+                        data.collision = this.collision;
+                    }
+                    return data;
+                }
+
+                //------------------------------------------------------------------
+                // IDisposable.Dispose
+                //------------------------------------------------------------------
+                public void Dispose()
+                {
+                    this.idTip = null;
+                }
 
             } //class BlockData
 

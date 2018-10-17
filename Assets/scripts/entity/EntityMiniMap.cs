@@ -116,10 +116,8 @@ namespace nangka
 
             public void Flash(IEntityMapData iMapData)
             {
-                MapData mapData = iMapData.GetMapData();
-
-                for (int y = 0; y < mapData.width; y++) {
-                    for (int x = 0; x < mapData.width; x++)
+                for (int y = 0; y < iMapData.GetHeight(); y++) {
+                    for (int x = 0; x < iMapData.GetWidth(); x++)
                     {
                         this.Flash(iMapData, x, y);
                     }

@@ -33,6 +33,7 @@ namespace nangka
         public static string ENTITY_CNAME_MAP_DATA = ENTITY_PATH + "EntityMapData";
         public static string ENTITY_CNAME_STRUCTURE = ENTITY_PATH + "EntityStructure";
         public static string ENTITY_CNAME_MINIMAP = ENTITY_PATH + "EntityMiniMap";
+        public static string ENTITY_CNAME_RECREATOR = ENTITY_PATH + "EntityRecreator";
 
         public static string ENTITY_CNAME_DEV_ENTRANCE = ENTITY_PATH + "EntityDevEntrance";
         public static string ENTITY_CNAME_MAPEDITOR_CONSOLE = ENTITY_PATH + "EntityMapEditorConsole";

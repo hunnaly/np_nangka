@@ -184,6 +184,9 @@ namespace nangka {
             public static IEnumerator RegistEntityMiniMap() { yield return RegistEntity<EntityMiniMap, IEntityMiniMap>(Define.ENTITY_CNAME_MINIMAP); }
             public static IEntityMiniMap GetIEntityMiniMap() { return GetInterface<EntityMiniMap, IEntityMiniMap>(Define.ENTITY_CNAME_MINIMAP); }
 
+            public static IEnumerator RegistEntityRecreator() { yield return RegistEntity<EntityRecreator, IEntityRecreator>(Define.ENTITY_CNAME_RECREATOR); }
+            public static IEntityRecreator GetIEntityRecreator() { return GetInterface<EntityRecreator, IEntityRecreator>(Define.ENTITY_CNAME_RECREATOR); }
+
             public static IEnumerator RegistEntityDevEntrance() { yield return RegistEntity<EntityDevEntrance, IEntityDevEntrance>(Define.ENTITY_CNAME_DEV_ENTRANCE); }
             public static IEntityDevEntrance GetIEntityDevEntrance() { return GetInterface<EntityDevEntrance, IEntityDevEntrance>(Define.ENTITY_CNAME_DEV_ENTRANCE); }
 

@@ -66,15 +66,19 @@ namespace nangka
                 private IEnumerator ReadyEntities()
                 {
                     yield return Utility.RegistEntityTextureResources();
+
+                    yield return Utility.RegistEntityPlayerData();
+                    yield return Utility.RegistEntityMapData();
+                    yield return Utility.RegistEntityRecreator();
+
+                    IEntityRecreator iRecreator = Utility.GetIEntityRecreator();
+                    iRecreator.Run();
+                    if (iRecreator.IsFinished() == false) yield return null;
+                    iRecreator.Terminate();
+
                     yield return Utility.RegistEntityFrame();
                     yield return Utility.RegistEntityMiniMap();
-
-                    yield return Utility.RegistEntityMapData();
-                    IEntityMapData iMapData = Utility.GetIEntityMapData();
-                    iMapData.Load(Utility.GetIEntityTextureResources());
-
                     yield return Utility.RegistEntityStructure();
-                    yield return Utility.RegistEntityPlayerData();
                     yield return Utility.RegistEntityPlayer();
                     yield return Utility.RegistEntityDungeon();
                 }

@@ -24,10 +24,8 @@ namespace nangka
             void SetCB_Move(CB_Player_Move cb);
             void SetCB_MoveEnd(CB_Player_MoveEnd cb);
             void SetCB_Rotate(CB_PLayer_Rotate cb);
-            void Prepare(Camera camera, GameObject objBase, PlayerData data);
+            void Prepare(Camera camera, GameObject objBase, IEntityPlayerData iPlayerData);
             void Reset();
-
-            PlayerData GetPlayerData();
 
             void RotateRight();
             void RotateLeft();
@@ -58,8 +56,7 @@ namespace nangka
             public void SetCB_Rotate(CB_PLayer_Rotate cb) { this._cameraCtrl.SetCB_Rotate(cb); }
 
             private CameraControl _cameraCtrl;
-            private PlayerData _refPlayerData;
-            public PlayerData GetPlayerData() { return this._refPlayerData; }
+            private IEntityPlayerData _refPlayerData;
 
             private bool IsPrepared() { return (this._refPlayerData != null); }
 
@@ -103,14 +100,14 @@ namespace nangka
             // ロジック準備処理／ロジックリセット処理
             //------------------------------------------------------------------
 
-            public void Prepare(Camera camera, GameObject objBase, PlayerData data)
+            public void Prepare(Camera camera, GameObject objBase, IEntityPlayerData iPlayerData)
             {
                 if (!this.IsReadyLogic()) return;
                 if (this.IsPrepared()) return;
 
-                this._refPlayerData = data;
+                this._refPlayerData = iPlayerData;
                 this._cameraCtrl.SetCamera(camera, objBase);
-                this._cameraCtrl.SetDir(data.dir);
+                this._cameraCtrl.SetDir(iPlayerData.GetDir());
             }
 
             public void Reset()
@@ -142,7 +139,7 @@ namespace nangka
             {
                 if (!this.IsPrepared()) return;
 
-                Direction dir = this._refPlayerData.dir;
+                Direction dir = this._refPlayerData.GetDir();
                 this.Rotate(dir, false, Utility.DirectionRight(dir));
             }
 
@@ -150,7 +147,7 @@ namespace nangka
             {
                 if (!this.IsPrepared()) return;
 
-                Direction dir = this._refPlayerData.dir;
+                Direction dir = this._refPlayerData.GetDir();
                 this.Rotate(dir, true, Utility.DirectionLeft(dir));
             }
 
@@ -160,7 +157,7 @@ namespace nangka
 
                 if (this._cameraCtrl.Rotate(Utility.DirectionToAngleY(dirFrom), bRotMinus))
                 {
-                    this._refPlayerData.SetDirection(dirTo);
+                    this._refPlayerData.SetDir(dirTo);
                 }
             }
 
@@ -172,14 +169,14 @@ namespace nangka
             {
                 if (!this.IsPrepared()) return;
 
-                this.Move(this._refPlayerData.dir);
+                this.Move(this._refPlayerData.GetDir());
             }
 
             public void MoveBack()
             {
                 if (!this.IsPrepared()) return;
 
-                this.Move(Utility.GetOppositeDirection(this._refPlayerData.dir));
+                this.Move(Utility.GetOppositeDirection(this._refPlayerData.GetDir()));
             }
 
             private void Move(Direction dir)
@@ -188,21 +185,21 @@ namespace nangka
 
                 if (this._cameraCtrl.Move(dir))
                 {
-                    int x = this._refPlayerData.x;
-                    int y = this._refPlayerData.y;
+                    int x = this._refPlayerData.GetX();
+                    int y = this._refPlayerData.GetY();
 
                     this.MovePlayerPos(dir);
 
                     // 移動開始コールバック
                     CB_Player_MoveStart cb = this._cameraCtrl.GetCB_MoveStart();
-                    if (cb != null) cb(x, y, this._refPlayerData.x, this._refPlayerData.y);
+                    if (cb != null) cb(x, y, this._refPlayerData.GetX(), this._refPlayerData.GetY());
                 }
             }
 
             private void MovePlayerPos(Direction dir)
             {
-                int x = this._refPlayerData.x;
-                int y = this._refPlayerData.y;
+                int x = this._refPlayerData.GetX();
+                int y = this._refPlayerData.GetY();
 
                 switch (dir)
                 {

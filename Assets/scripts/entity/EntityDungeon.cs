@@ -117,6 +117,7 @@ namespace nangka
             // ダンジョン構築
             private IEnumerator Build()
             {
+                IEntityPlayerData iPlayerData = Utility.GetIEntityPlayerData();
                 IEntityMapData iMapData = Utility.GetIEntityMapData();
                 IEntityStructure iStructure = Utility.GetIEntityStructure();
 
@@ -127,15 +128,7 @@ namespace nangka
                     this.builder.Init(iStructure, iMapData);
                     this.builder.Ready();
 
-                    ////////////////////////////////////
-                    // キャラクターの位置
-                    // TODO: 本来はセーブデータから取得。ひとまず初期情報を指定。
-                    MapData mapData = iMapData.GetMapData();
-                    int x = mapData.startX;
-                    int y = mapData.startY;
-                    ////////////////////////////////////
-
-                    this.builder.Create(x, y, Define.SHOWABLE_BLOCK);
+                    this.builder.Create(iPlayerData.GetX(), iPlayerData.GetY(), Define.SHOWABLE_BLOCK);
 
                 } while (false);
 
@@ -147,36 +140,23 @@ namespace nangka
             {
                 IEntityPlayerData iPlayerData = Utility.GetIEntityPlayerData();
 
-                ////////////////////////////////////
-                // キャラクターの位置と向き
-                // TODO: 本来はセーブデータから取得。ひとまず初期情報を指定。
-                MapData mapData = Utility.GetIEntityMapData().GetMapData();
-                int x = mapData.startX;
-                int y = mapData.startY;
-                Direction dir = mapData.startDir;
-                ////////////////////////////////////
-
-                PlayerData playerData = iPlayerData.GetPlayerData();
-                playerData.SetPos(x, y);
-                playerData.SetDirection(dir);
-
                 // 初期位置に踏破フラグをたてる
                 IEntityMapData iMapData = Utility.GetIEntityMapData();
-                iMapData.Through(x, y);
+                iMapData.Through(iPlayerData.GetX(), iPlayerData.GetY());
 
                 IEntityPlayer iPlayer = Utility.GetIEntityPlayer();
                 iPlayer.SetCB_MoveStart(this.CB_Player_MoveStart);
                 iPlayer.SetCB_Move(this.CB_Player_Move);
                 iPlayer.SetCB_MoveEnd(this.CB_Player_MoveEnd);
                 iPlayer.SetCB_Rotate(this.CB_Player_Rotate);
-                iPlayer.Prepare(Global.Instance.cameraPlayer, Global.Instance.objCameraPlayerBase, playerData);
+                iPlayer.Prepare(Global.Instance.cameraPlayer, Global.Instance.objCameraPlayerBase, iPlayerData);
 
 
                 // ミニマップに初期位置を反映
                 IEntityMiniMap iMiniMap = Utility.GetIEntityMiniMap();
                 iMiniMap.Flash(iMapData);
-                iMiniMap.Move(x, y, Vector3.zero);
-                iMiniMap.Rotate(Utility.DirectionToAngleY(dir));
+                iMiniMap.Move(iPlayerData.GetX(), iPlayerData.GetY(), Vector3.zero);
+                iMiniMap.Rotate(Utility.DirectionToAngleY(iPlayerData.GetDir()));
 
                 yield return null;
             }
@@ -191,6 +171,8 @@ namespace nangka
                 IEntityPlayer iPlayer = Utility.GetIEntityPlayer();
                 if (iPlayer.IsBusy()) return;
 
+                IEntityPlayerData iPlayerData = Utility.GetIEntityPlayerData();
+
                 if (Input.GetKey(KeyCode.LeftArrow))
                 {
                     iPlayer.RotateLeft();
@@ -201,14 +183,14 @@ namespace nangka
                 }
                 else if (Input.GetKey(KeyCode.UpArrow))
                 {
-                    if (this.builder.CheckMoveAndScroll(iPlayer.GetPlayerData().dir))
+                    if (this.builder.CheckMoveAndScroll(iPlayerData.GetDir()))
                     {
                         iPlayer.MoveFront();
                     }
                 }
                 else if (Input.GetKey(KeyCode.DownArrow))
                 {
-                    if (this.builder.CheckMoveAndScroll(Utility.GetOppositeDirection(iPlayer.GetPlayerData().dir)))
+                    if (this.builder.CheckMoveAndScroll(Utility.GetOppositeDirection(iPlayerData.GetDir())))
                     {
                         iPlayer.MoveBack();
                     }
@@ -246,11 +228,10 @@ namespace nangka
             {
                 this.vecMoveDelta = Vector3.zero;
 
-                IEntityPlayer iPlayer = Utility.GetIEntityPlayer();
-                PlayerData playerData = iPlayer.GetPlayerData();
+                IEntityPlayerData iPlayerData = Utility.GetIEntityPlayerData();
 
                 IEntityMiniMap iMiniMap = Utility.GetIEntityMiniMap();
-                iMiniMap.Move(playerData.x, playerData.y, this.vecMoveDelta);
+                iMiniMap.Move(iPlayerData.GetX(), iPlayerData.GetY(), this.vecMoveDelta);
             }
 
             private void CB_Player_Rotate(float fAngle)

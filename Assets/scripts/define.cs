@@ -37,6 +37,8 @@ namespace nangka
 
         public static string ENTITY_CNAME_DEV_ENTRANCE = ENTITY_PATH + "EntityDevEntrance";
         public static string ENTITY_CNAME_MAPEDITOR_CONSOLE = ENTITY_PATH + "EntityMapEditorConsole";
+        public static string ENTITY_CNAME_COMMON_DIALOG = ENTITY_PATH + "EntityCommonDialog";
+        public static string ENTITY_CNAME_NEW_MAP = ENTITY_PATH + "EntityNewMap";
 
 
         //----------------------------------------------------------------
@@ -44,6 +46,7 @@ namespace nangka
         //----------------------------------------------------------------
         public static string RES_PATH_PREFAB_WALL = "Prefabs/Wall";
         public static string RES_PATH_PREFAB_ARROW = "Prefabs/Arrow";
+        public static string RES_PATH_PREFAB_COMMON_DIALOG = "Prefabs/CommonDialog";
 
 
         //----------------------------------------------------------------

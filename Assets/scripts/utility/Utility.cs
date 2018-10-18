@@ -187,11 +187,18 @@ namespace nangka {
             public static IEnumerator RegistEntityRecreator() { yield return RegistEntity<EntityRecreator, IEntityRecreator>(Define.ENTITY_CNAME_RECREATOR); }
             public static IEntityRecreator GetIEntityRecreator() { return GetInterface<EntityRecreator, IEntityRecreator>(Define.ENTITY_CNAME_RECREATOR); }
 
+
             public static IEnumerator RegistEntityDevEntrance() { yield return RegistEntity<EntityDevEntrance, IEntityDevEntrance>(Define.ENTITY_CNAME_DEV_ENTRANCE); }
             public static IEntityDevEntrance GetIEntityDevEntrance() { return GetInterface<EntityDevEntrance, IEntityDevEntrance>(Define.ENTITY_CNAME_DEV_ENTRANCE); }
 
             public static IEnumerator RegistEntityMapEditorConsole() { yield return RegistEntity<EntityMapEditorConsole, IEntityMapEditorConsole>(Define.ENTITY_CNAME_MAPEDITOR_CONSOLE); }
             public static IEntityMapEditorConsole GetIEntityMapEditorConsole() { return GetInterface<EntityMapEditorConsole, IEntityMapEditorConsole>(Define.ENTITY_CNAME_MAPEDITOR_CONSOLE); }
+
+            public static IEnumerator RegistEntityCommonDialog() { yield return RegistEntity<EntityCommonDialog, IEntityCommonDialog>(Define.ENTITY_CNAME_COMMON_DIALOG); }
+            public static IEntityCommonDialog GetIEntityCommonDialog() { return GetInterface<EntityCommonDialog, IEntityCommonDialog>(Define.ENTITY_CNAME_COMMON_DIALOG); }
+
+            public static IEnumerator RegistEntityNewMap() { yield return RegistEntity<EntityNewMap, IEntityNewMap>(Define.ENTITY_CNAME_NEW_MAP); }
+            public static IEntityNewMap GetIEntityNewMap() { return GetInterface<EntityNewMap, IEntityNewMap>(Define.ENTITY_CNAME_NEW_MAP); }
         }
 
     } //namespace utility

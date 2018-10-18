@@ -72,7 +72,7 @@ namespace nangka
                     yield return Utility.RegistEntityRecreator();
 
                     IEntityRecreator iRecreator = Utility.GetIEntityRecreator();
-                    iRecreator.Run();
+                    iRecreator.Run(EntityRecreator.MODE.EMPTY_MAP);
                     if (iRecreator.IsFinished() == false) yield return null;
                     iRecreator.Terminate();
 
@@ -82,6 +82,7 @@ namespace nangka
                     yield return Utility.RegistEntityPlayer();
                     yield return Utility.RegistEntityDungeon();
 
+                    yield return Utility.RegistEntityCommonDialog();
                     yield return Utility.RegistEntityMapEditorConsole();
                 }
             }

@@ -261,7 +261,7 @@ namespace nangka
                 this._bThroughWall = bThrough;
             }
 
-            bool EntityMapEditorConsole.IMapDataAccessor.ChangeWall(int x, int y, Direction dir)
+            bool EntityMapEditorConsole.IMapDataAccessor.ChangeWall(int x, int y, Direction dir, bool bBothSide)
             {
                 bool bChanged = ((this.IsOutOfRange(x, y) == false) && this.CheckMoveInRange(x, y, dir));
                 if (bChanged)
@@ -269,14 +269,40 @@ namespace nangka
                     IMapRawDataAccessor acc = (IMapRawDataAccessor)this._data;
                     BlockData[] table = acc.GetBlockData();
 
-                    int idx = y * this._data.GetWidth() + x;
-                    BlockData data = table[idx];
-
-                    data.idTip[(int)dir] = (byte)((data.idTip[(int)dir] == 0) ? 2 : 0);
-                    data.collision ^= (uint)(1 << (int)dir);
+                    this.ChangeWall(this.GetBlock(table, x, y), dir);
+                    if (bBothSide)
+                    {
+                        this.ChangeWall(this.GetAdvanceBlock(table, x, y, dir), Utility.GetOppositeDirection(dir));
+                    }
                 }
                 return bChanged;
             }
+
+            private void ChangeWall(BlockData data, Direction dir)
+            {
+                data.idTip[(int)dir] = (byte)((data.idTip[(int)dir] == 0) ? 2 : 0);
+                data.collision ^= (uint)(1 << (int)dir);
+            }
+
+            private BlockData GetBlock(BlockData[] table, int x, int y)
+            {
+                int idx = y * this._data.GetWidth() + x;
+                return table[idx];
+            }
+
+            private BlockData GetAdvanceBlock(BlockData[] table, int x, int y, Direction dir)
+            {
+                switch (dir)
+                {
+                    case Direction.NORTH: --y; break;
+                    case Direction.SOUTH: ++y; break;
+                    case Direction.EAST: ++x; break;
+                    case Direction.WEST: --x; break;
+                    default: break;
+                }
+                return this.GetBlock(table, x, y);
+            }
+
 
 
             //------------------------------------------------------------------

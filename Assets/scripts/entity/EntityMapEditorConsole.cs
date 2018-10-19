@@ -34,6 +34,7 @@ namespace nangka
             MAP_SAVE,               // 編集中のマップをセーブ
             NAVI_SWITCH,            // ナビゲーションウィンドウの表示切替
             WALL_THROUGH_SWITCH,    // 状態ウィンドウの表示切替
+            BOTH_SIDE_SWITCH,       // 壁の生成／破棄を両面で行うかどうかの切替
             RETURN_TO_DEV,          // 開発エントランスへ戻る
 
             MAX,
@@ -91,11 +92,12 @@ namespace nangka
 
             private bool _bShowNavi;
             private bool _bThroughWall;
+            private bool _bBothSideChangeWall;
 
             public interface IMapDataAccessor
             {
                 void ThroughWall(bool bThrough);
-                bool ChangeWall(int x, int y, Direction dir);
+                bool ChangeWall(int x, int y, Direction dir, bool bBothSide);
             }
 
 
@@ -164,6 +166,9 @@ namespace nangka
                 this._bThroughWall = false;
                 this.FlashWallThrough();
 
+                this._bBothSideChangeWall = true;
+                this.FlashBothSideChangeWall();
+
                 this._bReadyLogic = true;
                 yield return null;
             }
@@ -228,6 +233,7 @@ namespace nangka
                 {
                     case MAIN_CONSOLE_ITEM.NAVI_SWITCH: this.SwitchNavi(); break;
                     case MAIN_CONSOLE_ITEM.WALL_THROUGH_SWITCH: this.SwitchWallThrough(); break;
+                    case MAIN_CONSOLE_ITEM.BOTH_SIDE_SWITCH: this.SwitchBothSideChangeWall(); break;
                     default: break;
                 }
             }
@@ -262,12 +268,29 @@ namespace nangka
                 Text compText = component.objectTable[0].GetComponent<Text>();
                 if (compText != null)
                 {
-                    compText.text = "Wall-Through " + (this._bThroughWall ? "ON" : "OFF");
+                    compText.text = "Through-Wall " + (this._bThroughWall ? "ON" : "OFF");
                 }
 
                 IEntityMapData iMapData = Utility.GetIEntityMapData();
                 IMapDataAccessor acc = (IMapDataAccessor)(iMapData.GetOwnEntity());
                 acc.ThroughWall(this._bThroughWall);
+            }
+
+            private void SwitchBothSideChangeWall()
+            {
+                this._bBothSideChangeWall ^= true;
+                this.FlashBothSideChangeWall();
+                this.Cancel(false);
+            }
+            private void FlashBothSideChangeWall()
+            {
+                var component = this.refObjStateWindow.GetComponent<ObjectTable>();
+                component = component.objectTable[2].GetComponent<ObjectTable>();
+                Text compText = component.objectTable[0].GetComponent<Text>();
+                if (compText != null)
+                {
+                    compText.text = "BothSide-ChangeWall " + (this._bBothSideChangeWall ? "ON" : "OFF");
+                }
             }
 
             //------------------------------------------------------------------
@@ -280,19 +303,45 @@ namespace nangka
                 IMapDataAccessor acc = (IMapDataAccessor)(iMapData.GetOwnEntity());
 
                 IEntityPlayerData iPlayerData = Utility.GetIEntityPlayerData();
-                bool bChanged = acc.ChangeWall(iPlayerData.GetX(), iPlayerData.GetY(), iPlayerData.GetDir());
+                bool bChanged = acc.ChangeWall(iPlayerData.GetX(), iPlayerData.GetY(), iPlayerData.GetDir(), this._bBothSideChangeWall);
 
                 if (bChanged)
                 {
-                    // Structure の更新
-                    IEntityStructure iStructure = Utility.GetIEntityStructure();
-                    Texture tex = iMapData.GetTexture(iPlayerData.GetX(), iPlayerData.GetY(), iPlayerData.GetDir());
-                    iStructure.ChangeWall(0, 0, iPlayerData.GetDir(), tex);
+                    int dx = 0;
+                    int dy = 0;
+                    Direction dir = iPlayerData.GetDir();
 
-                    // MiniMap の更新
-                    IEntityMiniMap iMiniMap = Utility.GetIEntityMiniMap();
-                    iMiniMap.Flash(iMapData, iPlayerData.GetX(), iPlayerData.GetY(), true);
+                    this.FlashBlock(dx, dy, dir);
+
+                    if (this._bBothSideChangeWall)
+                    {
+                        switch (dir)
+                        {
+                            case Direction.NORTH: --dy; break;
+                            case Direction.SOUTH: ++dy; break;
+                            case Direction.EAST: ++dx; break;
+                            case Direction.WEST: --dx; break;
+                            default: break;
+                        }
+                        dir = Utility.GetOppositeDirection(dir);
+                        this.FlashBlock(dx, dy, dir);
+                    }
                 }
+            }
+
+            private void FlashBlock(int dx, int dy, Direction dir)
+            {
+                IEntityMapData iMapData = Utility.GetIEntityMapData();
+                IEntityPlayerData iPlayerData = Utility.GetIEntityPlayerData();
+
+                // Structure の更新
+                IEntityStructure iStructure = Utility.GetIEntityStructure();
+                Texture tex = iMapData.GetTexture(iPlayerData.GetX() + dx, iPlayerData.GetY() + dy, dir);
+                iStructure.ChangeWall(dx, dy, dir, tex);
+
+                // MiniMap の更新
+                IEntityMiniMap iMiniMap = Utility.GetIEntityMiniMap();
+                iMiniMap.Flash(iMapData, iPlayerData.GetX() + dx, iPlayerData.GetY() + dy, true);
             }
 
             //------------------------------------------------------------------

@@ -230,13 +230,13 @@ namespace nangka
                     case MAIN_CONSOLE_ITEM.WALL_THROUGH_SWITCH: this.SwitchWallThrough(); break;
                     default: break;
                 }
-                this.Cancel(false);
             }
 
             private void SwitchNavi()
             {
                 this._bShowNavi ^= true;
                 this.FlashNavi();
+                this.Cancel(false);
             }
             private void FlashNavi()
             {
@@ -253,6 +253,7 @@ namespace nangka
             {
                 this._bThroughWall ^= true;
                 this.FlashWallThrough();
+                this.Cancel(false);
             }
             private void FlashWallThrough()
             {
@@ -381,6 +382,12 @@ namespace nangka
             }
             private void ChangeModeProc_DecidedToHidden()
             {
+                //TODO: ロードのときもいるかも？
+                if (this._decidedItem == MAIN_CONSOLE_ITEM.MAP_NEW)
+                {
+                    this.FlashWallThrough();
+                }
+
                 this.ChangeModeProc_DecidedToMain();
                 this.ChangeModeProc_MainToHidden();
             }

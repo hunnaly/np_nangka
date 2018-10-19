@@ -121,7 +121,7 @@ namespace nangka
 
                 yield return Utility.RegistEntityRecreator();
                 IEntityRecreator iRecreator = Utility.GetIEntityRecreator();
-                iRecreator.Run(EntityRecreator.MODE.EMPTY_MAP, true);
+                iRecreator.Run(EntityRecreator.MODE.EMPTY_MAP);
                 if (iRecreator.IsFinished() == false) yield return null;
                 iRecreator.Terminate();
 

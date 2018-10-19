@@ -13,7 +13,7 @@ namespace nangka
         //------------------------------------------------------------------
         public interface IEntityRecreator : IEntity
         {
-            void Run(EntityRecreator.MODE mode = EntityRecreator.MODE.NORMAL, bool bRetainThroughWall = false);
+            void Run(EntityRecreator.MODE mode = EntityRecreator.MODE.NORMAL);
             bool IsFinished();
 
         } //interface IEntityNewCreator
@@ -39,7 +39,7 @@ namespace nangka
             //------------------------------------------------------------------
             public interface IMapDataRecreator
             {
-                void Begin(string name, int width, int height, bool bRetainThroughWall);
+                void Begin(string name, int width, int height);
                 void AddTexture(byte id, string path);
                 void SetBlock(int idx, EntityMapData.BlockData data);
                 void End();
@@ -72,7 +72,7 @@ namespace nangka
             private bool _bFinished;
             public bool IsFinished() { return this._bFinished; }
 
-            private delegate IEnumerator RecreateProc(bool bRetainThroughWall);
+            private delegate IEnumerator RecreateProc();
             private RecreateProc _funcRecreate;
 
 
@@ -104,7 +104,7 @@ namespace nangka
             // データ再設定実行処理
             //------------------------------------------------------------------
 
-            public void Run(EntityRecreator.MODE mode = EntityRecreator.MODE.NORMAL, bool bRetainThroughWall = false)
+            public void Run(EntityRecreator.MODE mode = EntityRecreator.MODE.NORMAL)
             {
                 if (!this.IsReadyLogic()) return;
                 if (this._bRunning) return;
@@ -113,7 +113,7 @@ namespace nangka
 
                 this._bRunning = true;
                 this._bFinished = false;
-                Utility.StartCoroutine(this.Recreate(bRetainThroughWall));
+                Utility.StartCoroutine(this.Recreate());
             }
 
             private RecreateProc GetRecreateProc(EntityRecreator.MODE mode)
@@ -129,9 +129,9 @@ namespace nangka
                 return func;
             }
 
-            private IEnumerator Recreate(bool bRetainThroughWall)
+            private IEnumerator Recreate()
             {
-                yield return this._funcRecreate(bRetainThroughWall);
+                yield return this._funcRecreate();
                 this._bFinished = true;
             }
 
@@ -139,22 +139,22 @@ namespace nangka
             // 通常データ
             //------------------------------------------------------------------
 
-            private IEnumerator RecreateNormalData(bool bRetainThroughWall)
+            private IEnumerator RecreateNormalData()
             {
                 // TODO:
-                yield return this.RecreateDummyData(bRetainThroughWall);
+                yield return this.RecreateDummyData();
             }
 
             //------------------------------------------------------------------
             // 空データ
             //------------------------------------------------------------------
 
-            private IEnumerator RecreateEmptyData(bool bRetainThroughWall)
+            private IEnumerator RecreateEmptyData()
             {
                 IEntityPlayerData iPlayerData = Utility.GetIEntityPlayerData();
                 IEntityMapData iMapData = Utility.GetIEntityMapData();
                 this.SetEmptyPlayerData((IPlayerDataRecreator)(iPlayerData.GetOwnEntity()));
-                this.SetEmptyMapData((IMapDataRecreator)(iMapData.GetOwnEntity()), bRetainThroughWall);
+                this.SetEmptyMapData((IMapDataRecreator)(iMapData.GetOwnEntity()));
                 yield return null;
             }
 
@@ -168,9 +168,9 @@ namespace nangka
                 recreator.End();
             }
 
-            private void SetEmptyMapData(IMapDataRecreator recreator, bool bRetainThroughWall)
+            private void SetEmptyMapData(IMapDataRecreator recreator)
             {
-                recreator.Begin("new map", 8, 8, bRetainThroughWall);
+                recreator.Begin("new map", 8, 8);
 
                 recreator.AddTexture(1, Define.RES_PATH_TEXTURE_WALL_BRICK_CEILING);
                 recreator.AddTexture(2, Define.RES_PATH_TEXTURE_WALL_BRICK_SIDEWALL);
@@ -209,12 +209,12 @@ namespace nangka
             // ダミーデータ
             //------------------------------------------------------------------
 
-            private IEnumerator RecreateDummyData(bool bRetainThroughWall)
+            private IEnumerator RecreateDummyData()
             {
                 IEntityPlayerData iPlayerData = Utility.GetIEntityPlayerData();
                 IEntityMapData iMapData = Utility.GetIEntityMapData();
                 this.SetDummyPlayerData((IPlayerDataRecreator)(iPlayerData.GetOwnEntity()));
-                this.SetDummyMapData((IMapDataRecreator)(iMapData.GetOwnEntity()), bRetainThroughWall);
+                this.SetDummyMapData((IMapDataRecreator)(iMapData.GetOwnEntity()));
                 yield return null;
             }
 
@@ -227,7 +227,7 @@ namespace nangka
                 recreator.End();
             }
 
-            private void SetDummyMapData(IMapDataRecreator recreator, bool bRetainThroughWall)
+            private void SetDummyMapData(IMapDataRecreator recreator)
             {
                 //   0   1   2   3   4   5   6   7
                 // +---+---+---+---+---+---+---+---+
@@ -248,7 +248,7 @@ namespace nangka
                 //7|           |                   |
                 // +---+---+---+---+---+---+---+---+
 
-                recreator.Begin("dummy", 8, 8, bRetainThroughWall);
+                recreator.Begin("dummy", 8, 8);
 
                 recreator.AddTexture(1, Define.RES_PATH_TEXTURE_WALL_BRICK_CEILING);
                 recreator.AddTexture(2, Define.RES_PATH_TEXTURE_WALL_BRICK_SIDEWALL);

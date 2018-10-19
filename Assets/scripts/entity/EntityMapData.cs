@@ -79,13 +79,11 @@ namespace nangka
             // データ設定メソッド（EntityNewCreator用）
             //------------------------------------------------------------------
 
-            void EntityRecreator.IMapDataRecreator.Begin(string name, int width, int height, bool bRetainThroughWall)
+            void EntityRecreator.IMapDataRecreator.Begin(string name, int width, int height)
             {
                 if (this._bRecreating) return;
 
-                bool bThroughWallTemp = bRetainThroughWall ? this._bThroughWall : false;
                 this.Reset();
-                this._bThroughWall = bThroughWallTemp;
 
                 this._bRecreating = true;
                 this._bLoaded = false;

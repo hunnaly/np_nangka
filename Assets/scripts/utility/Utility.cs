@@ -199,6 +199,12 @@ namespace nangka {
 
             public static IEnumerator RegistEntityNewMap() { yield return RegistEntity<EntityNewMap, IEntityNewMap>(Define.ENTITY_CNAME_NEW_MAP); }
             public static IEntityNewMap GetIEntityNewMap() { return GetInterface<EntityNewMap, IEntityNewMap>(Define.ENTITY_CNAME_NEW_MAP); }
+
+            public static IEnumerator RegistEntitySaveMap() { yield return RegistEntity<EntitySaveMap, IEntitySaveMap>(Define.ENTITY_CNAME_SAVE_MAP); }
+            public static IEntitySaveMap GetIEntitySaveMap() { return GetInterface<EntitySaveMap, IEntitySaveMap>(Define.ENTITY_CNAME_SAVE_MAP); }
+
+            public static IEnumerator RegistEntityLoadMap() { yield return RegistEntity<EntityLoadMap, IEntityLoadMap>(Define.ENTITY_CNAME_LOAD_MAP); }
+            public static IEntityLoadMap GetIEntityLoadMap() { return GetInterface<EntityLoadMap, IEntityLoadMap>(Define.ENTITY_CNAME_LOAD_MAP); }
         }
 
     } //namespace utility

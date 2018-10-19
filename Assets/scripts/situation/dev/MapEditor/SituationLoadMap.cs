@@ -9,17 +9,17 @@ namespace nangka
         {
             namespace mapeditor
             {
-                public class SituationNewMap : NpSituation
+                public class SituationLoadMap : NpSituation
                 {
                     protected override bool CreateRules()
                     {
-                        Debug.Log("SituationNewMap.CreateRules()");
-                        this.CreateRule<RuleNewMapToMEConsole>();
-                        this.CreateRule<RuleNewMapToMapEditor>();
+                        Debug.Log("SituationLoadMap.CreateRules()");
+                        this.CreateRule<RuleLoadMapToMEConsole>();
+                        this.CreateRule<RuleLoadMapToMapEditor>();
                         return true;
                     }
 
-                } // class SituaionNewMap
+                } // class SituaionLoadMap
 
             } //namespace mapeditor
         } //namespace dev

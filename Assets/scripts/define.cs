@@ -39,6 +39,8 @@ namespace nangka
         public static string ENTITY_CNAME_MAPEDITOR_CONSOLE = ENTITY_PATH + "EntityMapEditorConsole";
         public static string ENTITY_CNAME_COMMON_DIALOG = ENTITY_PATH + "EntityCommonDialog";
         public static string ENTITY_CNAME_NEW_MAP = ENTITY_PATH + "EntityNewMap";
+        public static string ENTITY_CNAME_SAVE_MAP = ENTITY_PATH + "EntitySaveMap";
+        public static string ENTITY_CNAME_LOAD_MAP = ENTITY_PATH + "EntityLoadMap";
 
 
         //----------------------------------------------------------------
@@ -55,6 +57,16 @@ namespace nangka
         public static string OBJ_NAME_DUNGEON_ROOT = "Dungeon";
         public static string OBJ_NAME_DUNGEON_BLOCK_ROOT = "Block_";
 
+
+        //----------------------------------------------------------------
+        // ファイルパス
+        //----------------------------------------------------------------
+        private static string FILE_PATH_MAP = "data/map";
+        public static string GetMapFilePath()
+        {
+            return FILE_PATH_MAP;
+        }
+        
 
         //----------------------------------------------------------------
         // Textureパス名 (ダミーデータ用)

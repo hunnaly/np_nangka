@@ -13,20 +13,19 @@ namespace nangka
     {
 
         //------------------------------------------------------------------
-        // IEntityNewMap
+        // IEntityLoadMap
         //------------------------------------------------------------------
-        public interface IEntityNewMap : IEntity
+        public interface IEntityLoadMap : IEntity
         {
-            EntityNewMap.RESULT GetResult();
+            EntityLoadMap.RESULT GetResult();
 
-        } //interface IEntityNewMap
+        } //interface IEntityLoadMap
 
 
         //------------------------------------------------------------------
-        // EntityNewMap
-        // [Need Entity] EntityCommonDialog, EntityRecreator, EntityMapEditorConsole
+        // EntityLoadMap
         //------------------------------------------------------------------
-        public class EntityNewMap : NpEntity, IEntityNewMap
+        public class EntityLoadMap : NpEntity, IEntityLoadMap
         {
             public enum RESULT
             {
@@ -45,8 +44,8 @@ namespace nangka
 
             private CommonDialog dialog;
 
-            private EntityNewMap.RESULT _result;
-            public EntityNewMap.RESULT GetResult() { return this._result; }
+            private EntityLoadMap.RESULT _result;
+            public EntityLoadMap.RESULT GetResult() { return this._result; }
 
 
             //------------------------------------------------------------------
@@ -55,7 +54,7 @@ namespace nangka
 
             protected override bool StartProc()
             {
-                Debug.Log("EntityNewMap.StartProc()");
+                Debug.Log("EntityLoadMap.StartProc()");
 
                 IEntityCommonDialog iDialog = Utility.GetIEntityCommonDialog();
                 this.dialog = iDialog.Create();
@@ -64,10 +63,10 @@ namespace nangka
                 this.dialog.SetParent(iMEConsole.GetRootCanvasTransform());
                 this.dialog.SetKeyCB(KeyCode.Return, this.DialogCB_OK);
                 this.dialog.SetKeyCB(KeyCode.RightShift, this.DialogCB_Cancel);
-                this.dialog.SetText("新しいマップを作成します。よろしいですか？\n\n  [OK(Return)]   [Cancel(Right-Shift)]");
+                this.dialog.SetText("マップをロードします。よろしいですか？\n\n  [OK(Return)]   [Cancel(Right-Shift)]");
                 this.dialog.Show();
 
-                this._result = EntityNewMap.RESULT.NONE;
+                this._result = EntityLoadMap.RESULT.NONE;
 
                 this._bReadyLogic = true;
                 return true;
@@ -75,7 +74,7 @@ namespace nangka
 
             protected override bool TerminateProc()
             {
-                Debug.Log("EntityNewMap.TerminateProc()");
+                Debug.Log("EntityLoadMap.TerminateProc()");
 
                 this._bReadyLogic = false;
                 return true;
@@ -98,6 +97,10 @@ namespace nangka
 
             private void DialogCB_OK()
             {
+                IEntityCommonDialog iDialog = Utility.GetIEntityCommonDialog();
+                iDialog.Release(this.dialog);
+                this.dialog = null;
+
                 Utility.StartCoroutine(this.Recreate());
             }
 
@@ -107,7 +110,7 @@ namespace nangka
                 iDialog.Release(this.dialog);
                 this.dialog = null;
 
-                this._result = EntityNewMap.RESULT.CANCEL;
+                this._result = EntityLoadMap.RESULT.CANCEL;
             }
 
             private IEnumerator Recreate()
@@ -121,16 +124,16 @@ namespace nangka
 
                 yield return Utility.RegistEntityRecreator();
                 IEntityRecreator iRecreator = Utility.GetIEntityRecreator();
-                iRecreator.Run(EntityRecreator.MODE_PLAYER.EMPTY_MMOPEN, EntityRecreator.MODE_MAP.EMPTY);
+                iRecreator.Run(EntityRecreator.MODE_PLAYER.EMPTY_MMOPEN, EntityRecreator.MODE_MAP.FILE, "map_test.dat");
                 if (iRecreator.IsFinished() == false) yield return null;
                 iRecreator.Terminate();
 
                 iDungeon.Restart();
 
-                this._result = EntityNewMap.RESULT.SUCCESS;
+                this._result = EntityLoadMap.RESULT.SUCCESS;
             }
 
-        } //class EntityNewMap
+        } //class EntityLoadMap
 
     } //namespace entity
 } //namespace nangka

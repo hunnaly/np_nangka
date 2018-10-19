@@ -13,20 +13,19 @@ namespace nangka
     {
 
         //------------------------------------------------------------------
-        // IEntityNewMap
+        // IEntitySaveMap
         //------------------------------------------------------------------
-        public interface IEntityNewMap : IEntity
+        public interface IEntitySaveMap : IEntity
         {
-            EntityNewMap.RESULT GetResult();
+            EntitySaveMap.RESULT GetResult();
 
-        } //interface IEntityNewMap
+        } //interface IEntitySaveMap
 
 
         //------------------------------------------------------------------
-        // EntityNewMap
-        // [Need Entity] EntityCommonDialog, EntityRecreator, EntityMapEditorConsole
+        // EntitySaveMap
         //------------------------------------------------------------------
-        public class EntityNewMap : NpEntity, IEntityNewMap
+        public class EntitySaveMap : NpEntity, IEntitySaveMap
         {
             public enum RESULT
             {
@@ -45,8 +44,15 @@ namespace nangka
 
             private CommonDialog dialog;
 
-            private EntityNewMap.RESULT _result;
-            public EntityNewMap.RESULT GetResult() { return this._result; }
+            private EntitySaveMap.RESULT _result;
+            public EntitySaveMap.RESULT GetResult() { return this._result; }
+
+
+            public interface IMapDataAccessor
+            {
+                void Save(string fileName);
+
+            } //interface IMapDataAccessor
 
 
             //------------------------------------------------------------------
@@ -55,7 +61,7 @@ namespace nangka
 
             protected override bool StartProc()
             {
-                Debug.Log("EntityNewMap.StartProc()");
+                Debug.Log("EntitySaveMap.StartProc()");
 
                 IEntityCommonDialog iDialog = Utility.GetIEntityCommonDialog();
                 this.dialog = iDialog.Create();
@@ -64,10 +70,10 @@ namespace nangka
                 this.dialog.SetParent(iMEConsole.GetRootCanvasTransform());
                 this.dialog.SetKeyCB(KeyCode.Return, this.DialogCB_OK);
                 this.dialog.SetKeyCB(KeyCode.RightShift, this.DialogCB_Cancel);
-                this.dialog.SetText("新しいマップを作成します。よろしいですか？\n\n  [OK(Return)]   [Cancel(Right-Shift)]");
+                this.dialog.SetText("マップをセーブします。よろしいですか？\n\n  [OK(Return)]   [Cancel(Right-Shift)]");
                 this.dialog.Show();
 
-                this._result = EntityNewMap.RESULT.NONE;
+                this._result = EntitySaveMap.RESULT.NONE;
 
                 this._bReadyLogic = true;
                 return true;
@@ -75,7 +81,7 @@ namespace nangka
 
             protected override bool TerminateProc()
             {
-                Debug.Log("EntityNewMap.TerminateProc()");
+                Debug.Log("EntitySaveMap.TerminateProc()");
 
                 this._bReadyLogic = false;
                 return true;
@@ -98,7 +104,12 @@ namespace nangka
 
             private void DialogCB_OK()
             {
-                Utility.StartCoroutine(this.Recreate());
+                IEntityCommonDialog iDialog = Utility.GetIEntityCommonDialog();
+                iDialog.Release(this.dialog);
+                this.dialog = null;
+
+                bool bSuccess = this.SaveMapData();
+                this.CreateResultDialog(bSuccess);
             }
 
             private void DialogCB_Cancel()
@@ -107,30 +118,39 @@ namespace nangka
                 iDialog.Release(this.dialog);
                 this.dialog = null;
 
-                this._result = EntityNewMap.RESULT.CANCEL;
+                this._result = EntitySaveMap.RESULT.CANCEL;
             }
 
-            private IEnumerator Recreate()
+            private bool SaveMapData()
+            {
+                IEntityMapData iMapData = Utility.GetIEntityMapData();
+                IMapDataAccessor acc = (IMapDataAccessor)(iMapData.GetOwnEntity());
+                acc.Save("map_test.dat");
+                return true;
+            }
+
+            private void CreateResultDialog(bool bSuccess)
+            {
+                IEntityCommonDialog iDialog = Utility.GetIEntityCommonDialog();
+                this.dialog = iDialog.Create();
+
+                IEntityMapEditorConsole iMEConsole = Utility.GetIEntityMapEditorConsole();
+                this.dialog.SetParent(iMEConsole.GetRootCanvasTransform());
+                this.dialog.SetKeyCB(KeyCode.Return, this.ResultDialog_OK);
+                this.dialog.SetText(bSuccess ? "セーブしました。" : "セーブに失敗しました。");
+                this.dialog.Show();
+            }
+
+            private void ResultDialog_OK()
             {
                 IEntityCommonDialog iDialog = Utility.GetIEntityCommonDialog();
                 iDialog.Release(this.dialog);
                 this.dialog = null;
 
-                IEntityDungeon iDungeon = Utility.GetIEntityDungeon();
-                iDungeon.Reset();
-
-                yield return Utility.RegistEntityRecreator();
-                IEntityRecreator iRecreator = Utility.GetIEntityRecreator();
-                iRecreator.Run(EntityRecreator.MODE_PLAYER.EMPTY_MMOPEN, EntityRecreator.MODE_MAP.EMPTY);
-                if (iRecreator.IsFinished() == false) yield return null;
-                iRecreator.Terminate();
-
-                iDungeon.Restart();
-
-                this._result = EntityNewMap.RESULT.SUCCESS;
+                this._result = EntitySaveMap.RESULT.SUCCESS;
             }
 
-        } //class EntityNewMap
+        } //class EntitySaveMap
 
     } //namespace entity
 } //namespace nangka

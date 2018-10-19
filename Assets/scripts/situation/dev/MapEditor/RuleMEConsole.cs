@@ -48,7 +48,7 @@ namespace nangka
 
 
                 //------------------------------------------------------------------
-                // RuleMEConsoleToMapEditor
+                // RuleMEConsoleToNewMap
                 //------------------------------------------------------------------
                 public class RuleMEConsoleToNewMap : RuleBase, INpRule
                 {
@@ -64,12 +64,12 @@ namespace nangka
                     public void ReadyNextSituation()
                     {
                         Debug.Log("RuleMEConsoleToNewMap.ReadyNextSituation()");
-                        Utility.StartCoroutine(this.Ready());
+                        Utility.StartCoroutine(this.ReadyNewMap());
                     }
 
                     public void CleanUpForce() { }
 
-                    private IEnumerator Ready()
+                    private IEnumerator ReadyNewMap()
                     {
                         IEntityMapEditorConsole iMeConsole = Utility.GetIEntityMapEditorConsole();
                         iMeConsole.ChangeMode();
@@ -80,7 +80,79 @@ namespace nangka
                         this.nextSituation = NpSituation.Create<SituationNewMap>();
                     }
 
-                } //class RuleMEConsoleToMapEditor
+                } //class RuleMEConsoleToNewMap
+
+
+                //------------------------------------------------------------------
+                // RuleMEConsoleToSaveMap
+                //------------------------------------------------------------------
+                public class RuleMEConsoleToSaveMap : RuleBase, INpRule
+                {
+                    public bool CheckRule()
+                    {
+                        IEntityMapEditorConsole iMeConsole = Utility.GetIEntityMapEditorConsole();
+                        bool bDecided = (iMeConsole.GetDetectedMode() == CONSOLE_MODE.DECIDED);
+                        bool bSelectSaveMap = (iMeConsole.GetDecidedItem() == MAIN_CONSOLE_ITEM.MAP_SAVE);
+
+                        return (bDecided && bSelectSaveMap);
+                    }
+
+                    public void ReadyNextSituation()
+                    {
+                        Debug.Log("RuleMEConsoleToSaveMap.ReadyNextSituation()");
+                        Utility.StartCoroutine(this.ReadySaveMap());
+                    }
+
+                    public void CleanUpForce() { }
+
+                    private IEnumerator ReadySaveMap()
+                    {
+                        IEntityMapEditorConsole iMeConsole = Utility.GetIEntityMapEditorConsole();
+                        iMeConsole.ChangeMode();
+
+                        yield return Utility.RegistEntitySaveMap();
+
+                        // 次の Situation を登録
+                        this.nextSituation = NpSituation.Create<SituationSaveMap>();
+                    }
+
+                } //class RuleMEConsoleToSaveMap
+
+
+                //------------------------------------------------------------------
+                // RuleMEConsoleToLoadMap
+                //------------------------------------------------------------------
+                public class RuleMEConsoleToLoadMap : RuleBase, INpRule
+                {
+                    public bool CheckRule()
+                    {
+                        IEntityMapEditorConsole iMeConsole = Utility.GetIEntityMapEditorConsole();
+                        bool bDecided = (iMeConsole.GetDetectedMode() == CONSOLE_MODE.DECIDED);
+                        bool bSelectLoadMap = (iMeConsole.GetDecidedItem() == MAIN_CONSOLE_ITEM.MAP_LOAD);
+
+                        return (bDecided && bSelectLoadMap);
+                    }
+
+                    public void ReadyNextSituation()
+                    {
+                        Debug.Log("RuleMEConsoleToLoadMap.ReadyNextSituation()");
+                        Utility.StartCoroutine(this.ReadyLoadMap());
+                    }
+
+                    public void CleanUpForce() { }
+
+                    private IEnumerator ReadyLoadMap()
+                    {
+                        IEntityMapEditorConsole iMeConsole = Utility.GetIEntityMapEditorConsole();
+                        iMeConsole.ChangeMode();
+
+                        yield return Utility.RegistEntityLoadMap();
+
+                        // 次の Situation を登録
+                        this.nextSituation = NpSituation.Create<SituationLoadMap>();
+                    }
+
+                } //class RuleMEConsoleToLoadMap
 
             } //namespace mapeditor
         } //namespace dev

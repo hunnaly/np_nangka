@@ -382,8 +382,8 @@ namespace nangka
             }
             private void ChangeModeProc_DecidedToHidden()
             {
-                //TODO: ロードのときもいるかも？
-                if (this._decidedItem == MAIN_CONSOLE_ITEM.MAP_NEW)
+                if ((this._decidedItem == MAIN_CONSOLE_ITEM.MAP_NEW)
+                    || (this._decidedItem == MAIN_CONSOLE_ITEM.MAP_LOAD))
                 {
                     this.FlashWallThrough();
                 }

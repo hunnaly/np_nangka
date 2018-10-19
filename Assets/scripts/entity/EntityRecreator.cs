@@ -1,4 +1,8 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
+using System.IO;
+using System.Runtime.Serialization.Formatters.Binary;
+using System.Runtime.Serialization;
 using UnityEngine;
 using np;
 using nangka.utility;
@@ -13,7 +17,7 @@ namespace nangka
         //------------------------------------------------------------------
         public interface IEntityRecreator : IEntity
         {
-            void Run(EntityRecreator.MODE mode = EntityRecreator.MODE.NORMAL);
+            void Run(EntityRecreator.MODE_PLAYER modePlayer, EntityRecreator.MODE_MAP modeMap, string mapFileName = null);
             bool IsFinished();
 
         } //interface IEntityNewCreator
@@ -28,10 +32,26 @@ namespace nangka
             public enum MODE
             {
                 NORMAL,
+                NORMAL_MAP_BUT_INIT_PLAYER,
                 EMPTY_MAP,
                 DUMMY_MAP
 
             } // enum MODE
+
+            public enum MODE_PLAYER
+            {
+                NORMAL,         // プレイヤーデータをロードする
+                EMPTY,          // 空プレイヤーデータを作成する
+                EMPTY_MMOPEN    // 空プレイヤーデータを作成する（ミニマップを強制的にオープン状態にする）
+            }
+
+            public enum MODE_MAP
+            {
+                NORMAL,         // PlayerData からロードするべきマップの情報を取得してロードする
+                FILE,           // 指定されたファイル名を使用してロードする
+                EMPTY,          // 空マップを作成する
+                DUMMY           // ダミーマップを作成する
+            }
 
             //------------------------------------------------------------------
             // EntityMapData にマップデータを設定するためのインタフェース
@@ -43,6 +63,8 @@ namespace nangka
                 void AddTexture(byte id, string path);
                 void SetBlock(int idx, EntityMapData.BlockData data);
                 void End();
+
+                void DeepCopy(EntityMapData.MapData data);
             }
 
             //------------------------------------------------------------------
@@ -68,12 +90,12 @@ namespace nangka
             public bool IsReadyLogic() { return this._bReadyLogic; }
 
             private bool _bRunning;
-
-            private bool _bFinished;
-            public bool IsFinished() { return this._bFinished; }
+            public bool IsFinished() { return (this._bRunning == false); }
 
             private delegate IEnumerator RecreateProc();
-            private RecreateProc _funcRecreate;
+            private RecreateProc _funcRecreatePlayer;
+            private RecreateProc _funcRecreateMap;
+            private string _mapFileName;
 
 
             //------------------------------------------------------------------
@@ -104,26 +126,41 @@ namespace nangka
             // データ再設定実行処理
             //------------------------------------------------------------------
 
-            public void Run(EntityRecreator.MODE mode = EntityRecreator.MODE.NORMAL)
+            public void Run(EntityRecreator.MODE_PLAYER modePlayer, EntityRecreator.MODE_MAP modeMap, string mapFileName = null)
             {
                 if (!this.IsReadyLogic()) return;
                 if (this._bRunning) return;
 
-                this._funcRecreate = this.GetRecreateProc(mode);
+                this._funcRecreatePlayer = this.GetRecreatePlayerProc(modePlayer);
+                this._funcRecreateMap = this.GetRecreateMapProc(modeMap);
+                this._mapFileName = mapFileName;
 
                 this._bRunning = true;
-                this._bFinished = false;
                 Utility.StartCoroutine(this.Recreate());
             }
 
-            private RecreateProc GetRecreateProc(EntityRecreator.MODE mode)
+            private RecreateProc GetRecreatePlayerProc(EntityRecreator.MODE_PLAYER modePlayer)
             {
                 RecreateProc func = null;
-                switch (mode)
+                switch (modePlayer)
                 {
-                    case EntityRecreator.MODE.NORMAL: func = this.RecreateNormalData; break;
-                    case EntityRecreator.MODE.EMPTY_MAP: func = this.RecreateEmptyData; break;
-                    case EntityRecreator.MODE.DUMMY_MAP: func = this.RecreateDummyData; break;
+                    case EntityRecreator.MODE_PLAYER.NORMAL: func = this.RecreateNormalPlayerData; break;
+                    case EntityRecreator.MODE_PLAYER.EMPTY: func = this.RecreateEmptyPlayerData; break;
+                    case EntityRecreator.MODE_PLAYER.EMPTY_MMOPEN: func = this.RecreateEmptyMMOpenPlayerData; break;
+                    default: break;
+                }
+                return func;
+            }
+
+            private RecreateProc GetRecreateMapProc(EntityRecreator.MODE_MAP modeMap)
+            {
+                RecreateProc func = null;
+                switch (modeMap)
+                {
+                    case EntityRecreator.MODE_MAP.NORMAL: func = this.RecreateNormalMapData; break;
+                    case EntityRecreator.MODE_MAP.FILE: func = this.RecreateFileMapData; break;
+                    case EntityRecreator.MODE_MAP.EMPTY: func = this.RecreateEmptyMapData; break;
+                    case EntityRecreator.MODE_MAP.DUMMY: func = this.RecreateDummyMapData; break;
                     default: break;
                 }
                 return func;
@@ -131,41 +168,91 @@ namespace nangka
 
             private IEnumerator Recreate()
             {
-                yield return this._funcRecreate();
-                this._bFinished = true;
+                yield return this._funcRecreatePlayer();
+                yield return this._funcRecreateMap();
+                this._bRunning = false;
             }
 
             //------------------------------------------------------------------
-            // 通常データ
+            // プレイヤーデータ
             //------------------------------------------------------------------
 
-            private IEnumerator RecreateNormalData()
+            private IEnumerator RecreateNormalPlayerData()
             {
-                // TODO:
-                yield return this.RecreateDummyData();
-            }
-
-            //------------------------------------------------------------------
-            // 空データ
-            //------------------------------------------------------------------
-
-            private IEnumerator RecreateEmptyData()
-            {
-                IEntityPlayerData iPlayerData = Utility.GetIEntityPlayerData();
-                IEntityMapData iMapData = Utility.GetIEntityMapData();
-                this.SetEmptyPlayerData((IPlayerDataRecreator)(iPlayerData.GetOwnEntity()));
-                this.SetEmptyMapData((IMapDataRecreator)(iMapData.GetOwnEntity()));
+                // TODO: プレイヤーデータをロードする
                 yield return null;
             }
 
-            private void SetEmptyPlayerData(IPlayerDataRecreator recreator)
+            private IEnumerator RecreateEmptyPlayerData()
+            {
+                IEntityPlayerData iPlayerData = Utility.GetIEntityPlayerData();
+                this.SetEmptyPlayerData((IPlayerDataRecreator)(iPlayerData.GetOwnEntity()), false);
+                yield return null;
+            }
+
+            private IEnumerator RecreateEmptyMMOpenPlayerData()
+            {
+                IEntityPlayerData iPlayerData = Utility.GetIEntityPlayerData();
+                this.SetEmptyPlayerData((IPlayerDataRecreator)(iPlayerData.GetOwnEntity()), true);
+                yield return null;
+            }
+
+            private void SetEmptyPlayerData(IPlayerDataRecreator recreator, bool bMMOpen)
             {
                 recreator.Begin();
                 recreator.SetMap(MAP_ID.MAP_DUMMY);
                 recreator.SetPos(0, 0);
                 recreator.SetDir(Direction.EAST);
-                recreator.SetForceOpenMiniMap(true);
+                if (bMMOpen) recreator.SetForceOpenMiniMap(true);
                 recreator.End();
+            }
+
+
+            //------------------------------------------------------------------
+            // マップデータ
+            //------------------------------------------------------------------
+
+            private IEnumerator RecreateNormalMapData()
+            {
+                // TODO: PlayerData からロードするべきマップの情報を取得してマップをロードする
+                yield return null;
+            }
+
+            private IEnumerator RecreateFileMapData()
+            {
+                IEntityMapData iMapData = Utility.GetIEntityMapData();
+                this.LoadMapData((IMapDataRecreator)(iMapData.GetOwnEntity()));
+                yield return null;
+            }
+
+            private IEnumerator RecreateEmptyMapData()
+            {
+                IEntityMapData iMapData = Utility.GetIEntityMapData();
+                this.SetEmptyMapData((IMapDataRecreator)(iMapData.GetOwnEntity()));
+                yield return null;
+            }
+
+            private IEnumerator RecreateDummyMapData()
+            {
+                IEntityMapData iMapData = Utility.GetIEntityMapData();
+                this.SetDummyMapData((IMapDataRecreator)(iMapData.GetOwnEntity()));
+                yield return null;
+            }
+
+            private void LoadMapData(IMapDataRecreator recreator)
+            {
+                if (this._mapFileName == null) return;
+
+                EntityMapData.MapData data = null;
+                string fullPath = Define.GetMapFilePath() + "/" + this._mapFileName;
+                using (FileStream fs = new FileStream(fullPath, FileMode.Open))
+                {
+                    BinaryFormatter formatter = new BinaryFormatter();
+                    data = (EntityMapData.MapData)(formatter.Deserialize(fs));
+                }
+
+                if (data == null) return;
+                recreator.DeepCopy(data);
             }
 
             private void SetEmptyMapData(IMapDataRecreator recreator)
@@ -202,28 +289,6 @@ namespace nangka
                     }
                 }
 
-                recreator.End();
-            }
-
-            //------------------------------------------------------------------
-            // ダミーデータ
-            //------------------------------------------------------------------
-
-            private IEnumerator RecreateDummyData()
-            {
-                IEntityPlayerData iPlayerData = Utility.GetIEntityPlayerData();
-                IEntityMapData iMapData = Utility.GetIEntityMapData();
-                this.SetDummyPlayerData((IPlayerDataRecreator)(iPlayerData.GetOwnEntity()));
-                this.SetDummyMapData((IMapDataRecreator)(iMapData.GetOwnEntity()));
-                yield return null;
-            }
-
-            private void SetDummyPlayerData(IPlayerDataRecreator recreator)
-            {
-                recreator.Begin();
-                recreator.SetMap(MAP_ID.MAP_DUMMY);
-                recreator.SetPos(0, 0);
-                recreator.SetDir(Direction.EAST);
                 recreator.End();
             }
 

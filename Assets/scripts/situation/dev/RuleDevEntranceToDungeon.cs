@@ -72,7 +72,7 @@ namespace nangka
                     yield return Utility.RegistEntityRecreator();
 
                     IEntityRecreator iRecreator = Utility.GetIEntityRecreator();
-                    iRecreator.Run();
+                    iRecreator.Run(EntityRecreator.MODE_PLAYER.EMPTY, EntityRecreator.MODE_MAP.DUMMY);
                     if (iRecreator.IsFinished() == false) yield return null;
                     iRecreator.Terminate();
 

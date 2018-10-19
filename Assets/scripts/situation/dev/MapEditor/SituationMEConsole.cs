@@ -16,6 +16,8 @@ namespace nangka
                         Debug.Log("SituationMEConsole.CreateRules()");
                         this.CreateRule<RuleMEConsoleToMapEditor>();
                         this.CreateRule<RuleMEConsoleToNewMap>();
+                        this.CreateRule<RuleMEConsoleToSaveMap>();
+                        this.CreateRule<RuleMEConsoleToLoadMap>();
                         return true;
                     }
 

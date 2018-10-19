@@ -12,7 +12,7 @@ namespace nangka
         //------------------------------------------------------------------
         public interface IEntityStructure : IEntity
         {
-            void Prepare(GameObject prefabPlane, int showableBlockNum);
+            void Prepare(GameObject prefabPlane, int showableBlockNum, Vector3 basePos);
             void Reset();
 
             void ActiveBlock(int ofstX, int ofstY, bool bActive);
@@ -99,7 +99,7 @@ namespace nangka
             // ロジック準備処理／ロジックリセット処理
             //------------------------------------------------------------------
 
-            public void Prepare(GameObject prefabPlane, int showableBlockNum)
+            public void Prepare(GameObject prefabPlane, int showableBlockNum, Vector3 basePos)
             {
                 if (!this.IsReadyLogic()) return;
                 if (this.IsPrepared()) return;
@@ -113,7 +113,7 @@ namespace nangka
                 }
 
                 this.objRoot = new GameObject(Define.OBJ_NAME_DUNGEON_ROOT);
-                this.Build();
+                this.Build(basePos);
             }
 
             public void Reset()
@@ -122,8 +122,6 @@ namespace nangka
 
                 this.Destroy();
                 this.refPrefabPlane = null;
-
-                this._bReadyLogic = false;
             }
 
 
@@ -262,7 +260,7 @@ namespace nangka
             // ブロック構築
             //------------------------------------------------------------------
 
-            private void Build()
+            private void Build(Vector3 basePos)
             {
                 // Direction.North 方向を向いている状態の
                 // numSide x numDise 分の Texture なしかつ 非表示のブロックを作成する
@@ -270,13 +268,13 @@ namespace nangka
                 // 両端同士も繋がりをもつループ構造とする
                 // 構築処理には numSide に適切な値が入っている必要があることに注意
 
-                this.BuildBlockLine(0, null);
+                this.BuildBlockLine(0, null, basePos);
 
                 // マーカーを頼りに両端のブロックを連結
                 this.SetLoopRelation();
             }
 
-            private void BuildBlockLine(int line, Block backLineBlock)
+            private void BuildBlockLine(int line, Block backLineBlock, Vector3 basePos)
             {
                 if (line >= this.numSide) return;
 
@@ -284,19 +282,19 @@ namespace nangka
                 // 再帰的に本ラインすべてのブロックを構築する
                 // saveBlock には、本ラインの始めのブロックが返ってくる
                 Block saveBlock = null;
-                this.BuildBlock(line, 0, backLineBlock, null, ref saveBlock);
+                this.BuildBlock(line, 0, backLineBlock, null, ref saveBlock, basePos);
 
                 // 次ラインの構築処理へ
-                this.BuildBlockLine(line + 1, saveBlock);
+                this.BuildBlockLine(line + 1, saveBlock, basePos);
             }
 
-            private void BuildBlock(int line, int num, Block backLineBlock, Block backBlock, ref Block refSaveBlock)
+            private void BuildBlock(int line, int num, Block backLineBlock, Block backBlock, ref Block refSaveBlock, Vector3 basePos)
             {
                 if (num >= this.numSide) return;
 
                 // ブロックの構築
                 Block block = new Block();
-                this.BuildBlockObject(block, line, num);
+                this.BuildBlockObject(block, line, num, basePos);
 
                 // 隣接する構築済みブロックと連結
                 this.SetBlockRelation(block, backBlock, Direction.WEST);
@@ -314,7 +312,7 @@ namespace nangka
                 // 次ブロックの構築処理へ
                 Block dummy = null;
                 if (backLineBlock != null) backLineBlock = backLineBlock.next[(int)Direction.EAST];
-                this.BuildBlock(line, num + 1, backLineBlock, block, ref dummy);
+                this.BuildBlock(line, num + 1, backLineBlock, block, ref dummy, basePos);
             }
 
             private void SetBlockRelation(Block target, Block relativeBlock, Direction dir)
@@ -355,9 +353,9 @@ namespace nangka
                 this.SetLoopRelationReal(dirProcess, nextA, endA, nextB, dirA2b);
             }
 
-            private void BuildBlockObject(Block block, int line, int num)
+            private void BuildBlockObject(Block block, int line, int num, Vector3 basePos)
             {
-                block.root = CreateBlockRootObject(line, num);
+                block.root = CreateBlockRootObject(line, num, basePos);
 
                 for (int i = 0; i < (int)Direction.SOLID_MAX; i++)
                 {
@@ -365,15 +363,15 @@ namespace nangka
                 }
             }
 
-            private GameObject CreateBlockRootObject(int line, int num)
+            private GameObject CreateBlockRootObject(int line, int num, Vector3 basePos)
             {
                 GameObject obj = new GameObject(Define.OBJ_NAME_DUNGEON_BLOCK_ROOT);
                 obj.transform.SetParent(this.objRoot.transform, false);
 
                 float sx = (this.numSide - 1) / 2 * -4.0f;
                 float sz = (this.numSide - 1) / 2 * 4.0f;
-                float x = sx + num * 4.0f;
-                float z = sz - line * 4.0f;
+                float x = basePos.x + sx + num * 4.0f;
+                float z = basePos.z + sz - line * 4.0f;
                 Vector3 trans = new Vector3(x, 0.0f, z);
                 obj.transform.localPosition = trans;
 

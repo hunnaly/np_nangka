@@ -18,7 +18,9 @@ namespace nangka
         public interface IEntityDungeon : IEntity
         {
             void Run();
-            void Pause(bool pause);
+
+            void Reset();
+            void Restart();
 
         } //interface IEntityDungeon
 
@@ -45,6 +47,43 @@ namespace nangka
             {
                 if (!this.IsReadyLogic()) return;
                 this.Pause(false);
+            }
+
+            public void Reset()
+            {
+                this.builder.Reset();
+
+                IEntityPlayer iPlayer = Utility.GetIEntityPlayer();
+                iPlayer.Reset();
+            }
+
+            public void Restart()
+            {
+                Debug.Log("-------Restart()----------");
+
+                if (!this.IsReadyLogic()) return;
+
+                this._bReadyLogic = false;
+                this.Pause(true);
+
+
+                IEntityPlayerData iPlayerData = Utility.GetIEntityPlayerData();
+
+                IEntityMapData iMapData = Utility.GetIEntityMapData();
+                iMapData.Through(iPlayerData.GetX(), iPlayerData.GetY());
+
+                this.builder.Ready();
+                this.builder.Create(iPlayerData.GetX(), iPlayerData.GetY(), Define.SHOWABLE_BLOCK, Global.Instance.objCameraPlayerBase.transform.localPosition);
+
+                IEntityPlayer iPlayer = Utility.GetIEntityPlayer();
+                iPlayer.Prepare(Global.Instance.cameraPlayer, Global.Instance.objCameraPlayerBase, iPlayerData);
+
+                IEntityMiniMap iMiniMap = Utility.GetIEntityMiniMap();
+                iMiniMap.Flash(iMapData, iPlayerData.IsForceOpenMiniMap());
+                iMiniMap.Move(iPlayerData.GetX(), iPlayerData.GetY(), Vector3.zero);
+                iMiniMap.Rotate(Utility.DirectionToAngleY(iPlayerData.GetDir()));
+
+                this._bReadyLogic = true;
             }
 
 
@@ -128,7 +167,7 @@ namespace nangka
                     this.builder.Init(iStructure, iMapData);
                     this.builder.Ready();
 
-                    this.builder.Create(iPlayerData.GetX(), iPlayerData.GetY(), Define.SHOWABLE_BLOCK);
+                    this.builder.Create(iPlayerData.GetX(), iPlayerData.GetY(), Define.SHOWABLE_BLOCK, Global.Instance.objCameraPlayerBase.transform.localPosition);
 
                 } while (false);
 
@@ -154,7 +193,7 @@ namespace nangka
 
                 // ミニマップに初期位置を反映
                 IEntityMiniMap iMiniMap = Utility.GetIEntityMiniMap();
-                iMiniMap.Flash(iMapData);
+                iMiniMap.Flash(iMapData, iPlayerData.IsForceOpenMiniMap());
                 iMiniMap.Move(iPlayerData.GetX(), iPlayerData.GetY(), Vector3.zero);
                 iMiniMap.Rotate(Utility.DirectionToAngleY(iPlayerData.GetDir()));
 
@@ -267,6 +306,7 @@ namespace nangka
 
                     this.refStructure = refStructure;
                     this.refIMapData = refIMapData;
+                    this.prefabWall = Resources.Load<GameObject>(Define.RES_PATH_PREFAB_WALL);
 
                     this.bValid = true;
                 }
@@ -275,9 +315,6 @@ namespace nangka
                 public void Ready()
                 {
                     if (!this.IsValid() || this.IsReady()) return;
-
-                    this.prefabWall = Resources.Load<GameObject>(Define.RES_PATH_PREFAB_WALL);
-
                     this.bReady = true;
                 }
 
@@ -288,7 +325,6 @@ namespace nangka
 
                     if (this.refStructure != null) this.refStructure.Reset();
                     if (this.refIMapData != null) this.refIMapData.Reset();
-                    if (this.prefabWall) { Resources.UnloadAsset(this.prefabWall); this.prefabWall = null; }
 
                     this.bReady = false;
                 }
@@ -298,6 +334,7 @@ namespace nangka
                 {
                     this.Reset();
 
+                    if (this.prefabWall) { Resources.UnloadAsset(this.prefabWall); this.prefabWall = null; }
                     this.refIMapData = null;
                     this.refStructure = null;
 
@@ -306,7 +343,7 @@ namespace nangka
 
                 // ダンジョン生成
                 // 指定座標の周りを視覚化
-                public void Create(int x, int y, int num)
+                public void Create(int x, int y, int num, Vector3 basePos)
                 {
                     if (!this.IsReady()) return;
 
@@ -314,7 +351,7 @@ namespace nangka
                     this.curY = y;
                     this.showableBlockNum = num;
 
-                    this.refStructure.Prepare(this.prefabWall, this.showableBlockNum);
+                    this.refStructure.Prepare(this.prefabWall, this.showableBlockNum, basePos);
 
                     int temp = this.showableBlockNum - 1;
                     int startOfstX = temp * -1;

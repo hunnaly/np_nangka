@@ -188,13 +188,13 @@ namespace nangka
                 foreach(CommonDialog dlg in this.listReleaseTable)
                 {
                     this.listTable.Remove(dlg);
+                    this.ClearDialog(dlg);
                 }
                 this.listReleaseTable.Clear();
 
                 foreach(CommonDialog dlg in this.listTable)
                 {
-                    ICommonDialogAccessor acc = (ICommonDialogAccessor)dlg;
-                    acc.EventProc();
+                    this.UpdateDialog(dlg);
                 }
 
                 return false;
@@ -233,13 +233,23 @@ namespace nangka
                 foreach (CommonDialog dlg in list)
                 {
                     if (dlg == null) continue;
-
-                    ICommonDialogAccessor acc = (ICommonDialogAccessor)dlg;
-                    GameObject obj = acc.GetInstance();
-                    if (obj) Object.Destroy(obj);
-                    acc.Clear();
+                    this.ClearDialog(dlg);
                 }
                 list.Clear();
+            }
+
+            private void ClearDialog(CommonDialog dlg)
+            {
+                ICommonDialogAccessor acc = (ICommonDialogAccessor)dlg;
+                GameObject obj = acc.GetInstance();
+                if (obj) Object.Destroy(obj);
+                acc.Clear();
+            }
+
+            private void UpdateDialog(CommonDialog dlg)
+            {
+                ICommonDialogAccessor acc = (ICommonDialogAccessor)dlg;
+                acc.EventProc();
             }
 
             //------------------------------------------------------------------

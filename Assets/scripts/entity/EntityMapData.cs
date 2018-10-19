@@ -40,7 +40,8 @@ namespace nangka
         // EntityMapData
         //------------------------------------------------------------------
         public class EntityMapData : NpEntity, IEntityMapData,
-            EntityRecreator.IMapDataRecreator
+            EntityRecreator.IMapDataRecreator,
+            EntityMapEditorConsole.IMapDataAccessor
         {
             //------------------------------------------------------------------
             // 準備処理関連変数
@@ -69,6 +70,8 @@ namespace nangka
             private BlockData[] tableData;
             private bool[] tableThrough;
 
+            private bool _bThroughWall;
+
             public EntityMapData GetOwnEntity() { return this; }
 
 
@@ -76,11 +79,13 @@ namespace nangka
             // データ設定メソッド（EntityNewCreator用）
             //------------------------------------------------------------------
 
-            void EntityRecreator.IMapDataRecreator.Begin(string name, int width, int height)
+            void EntityRecreator.IMapDataRecreator.Begin(string name, int width, int height, bool bRetainThroughWall)
             {
                 if (this._bRecreating) return;
 
+                bool bThroughWallTemp = bRetainThroughWall ? this._bThroughWall : false;
                 this.Reset();
+                this._bThroughWall = bThroughWallTemp;
 
                 this._bRecreating = true;
                 this._bLoaded = false;
@@ -128,6 +133,30 @@ namespace nangka
 
                 this._bLoaded = true;
                 this._bRecreating = false;
+            }
+
+
+            //------------------------------------------------------------------
+            // データ設定メソッド（EntityMapEditorConsole用）
+            //------------------------------------------------------------------
+
+            void EntityMapEditorConsole.IMapDataAccessor.ThroughWall(bool bThrough)
+            {
+                this._bThroughWall = bThrough;
+            }
+
+            bool EntityMapEditorConsole.IMapDataAccessor.ChangeWall(int x, int y, Direction dir)
+            {
+                bool bChanged = ((this.IsOutOfRange(x, y) == false) && this.CheckMoveInRange(x, y, dir));
+                if (bChanged)
+                {
+                    int idx = y * this._width + x;
+                    BlockData data = this.tableData[idx];
+
+                    data.idTip[(int)dir] = (byte)((data.idTip[(int)dir] == 0) ? 2 : 0);
+                    data.collision ^= (uint)(1 << (int)dir);
+                }
+                return bChanged;
             }
 
 
@@ -194,6 +223,7 @@ namespace nangka
                 this._name = "";
                 this._width = 0;
                 this._height = 0;
+                this._bThroughWall = false;
             }
 
             private void ClearThroughTable()
@@ -258,8 +288,30 @@ namespace nangka
             {
                 if (this.IsOutOfRange(x, y)) return false;
 
-                int idx = y * this._width + x;
-                return ((this.tableData[idx].collision & (1 << (int)dir)) == 0);
+                bool bMovable = false;
+                if (this._bThroughWall)
+                {
+                    bMovable = this.CheckMoveInRange(x, y, dir);
+                }
+                else
+                {
+                    int idx = y * this._width + x;
+                    bMovable = ((this.tableData[idx].collision & (1 << (int)dir)) == 0);
+                }
+                return bMovable;
+            }
+
+            private bool CheckMoveInRange(int x, int y, Direction dir)
+            {
+                switch (dir)
+                {
+                    case Direction.NORTH: --y; break;
+                    case Direction.SOUTH: ++y; break;
+                    case Direction.EAST: ++x; break;
+                    case Direction.WEST: --x; break;
+                    default: break;
+                }
+                return (this.IsOutOfRange(x, y) == false);
             }
 
             public bool IsOutOfRange(int x, int y)

@@ -16,8 +16,8 @@ namespace nangka
         //------------------------------------------------------------------
         public interface IEntityMiniMap : IEntity
         {
-            void Flash(IEntityMapData iMapData);
-            void Flash(IEntityMapData iMapData, int x, int y);
+            void Flash(IEntityMapData iMapData, bool bForceOpened = false);
+            void Flash(IEntityMapData iMapData, int x, int y, bool bForceOpened = false);
             void Rotate(float angleZ);
             void Move(int x, int y, Vector3 delta);
 
@@ -114,17 +114,17 @@ namespace nangka
             // インタフェース実装
             //------------------------------------------------------------------
 
-            public void Flash(IEntityMapData iMapData)
+            public void Flash(IEntityMapData iMapData, bool bForceOpen = false)
             {
                 for (int y = 0; y < iMapData.GetHeight(); y++) {
                     for (int x = 0; x < iMapData.GetWidth(); x++)
                     {
-                        this.Flash(iMapData, x, y);
+                        this.Flash(iMapData, x, y, bForceOpen);
                     }
                 }
             }
 
-            public void Flash(IEntityMapData iMapData, int x, int y)
+            public void Flash(IEntityMapData iMapData, int x, int y, bool bForceOpen = false)
             {
                 var component = this.refObjMinimap.GetComponent<ObjectTable>();
                 GameObject obj = component.objectTable[y];
@@ -132,7 +132,7 @@ namespace nangka
                 component = obj.GetComponent<ObjectTable>();
                 obj = component.objectTable[x];
 
-                if (iMapData.IsThorough(x, y)) this.Show(obj, iMapData, x, y);
+                if (bForceOpen || iMapData.IsThorough(x, y)) this.Show(obj, iMapData, x, y);
                 else this.Hide(obj);
             }
 

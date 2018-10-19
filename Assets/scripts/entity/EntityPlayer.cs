@@ -33,8 +33,6 @@ namespace nangka
             void MoveBack();
             bool IsBusy();
 
-            void Pause(bool pause);
-
         } //interface IEntityPlayer
 
 
@@ -115,8 +113,6 @@ namespace nangka
                 if (!this.IsReadyLogic()) return;
 
                 this._refPlayerData = null;
-
-                this._bReadyLogic = false;
             }
 
             //------------------------------------------------------------------

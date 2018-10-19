@@ -16,6 +16,7 @@ namespace np {
         protected virtual bool TerminateProc() { return true; }
         protected virtual void LastUpdateProc() { }
         protected virtual void OnGUIProc() { }
+        protected virtual void OnPause(bool bPause) { }
         protected virtual void CleanUp() { }
 
         ~NpEntity()
@@ -77,7 +78,11 @@ namespace np {
             this.OnGUIProc();
         }
 
-        public void Pause(bool pause) { this.__bPaused = pause; }
+        public void Pause(bool pause)
+        {
+            this.OnPause(pause);
+            this.__bPaused = pause;
+        }
 
         public void Terminate() { this.__bTerminate = true; }
         public void CleanUpForce() { this.CleanUp(); }

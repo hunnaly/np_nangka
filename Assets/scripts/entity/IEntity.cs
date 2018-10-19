@@ -10,6 +10,7 @@
         {
             bool IsReadyLogic();
             void Terminate();
+            void Pause(bool bPause);
 
         } //interface IEntity
 

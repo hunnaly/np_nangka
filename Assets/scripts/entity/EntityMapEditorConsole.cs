@@ -19,7 +19,8 @@ namespace nangka
             INVALIDATE, // 無効なモード（モード変更検出処理において未変更を表す値）
 
             HIDDEN,     // コンソールが隠れている状態（初期状態）
-            MAIN        // メインコンソールが表示され操作可能な状態
+            MAIN,       // メインコンソールが表示され操作可能な状態
+            DECIDED     // メインコンソール上でアイテムを決定した状態
 
         } //enum CONSOLE_MODE
 
@@ -28,13 +29,15 @@ namespace nangka
         //------------------------------------------------------------------
         public enum MAIN_CONSOLE_ITEM : int
         {
-            MAP_NEW,        // 新規マップ作成
-            MAP_LOAD,       // 既存のマップをロード
-            MAP_SAVE,       // 編集中のマップをセーブ
-            NAVI_SWITCH,    // ナビゲーションウィンドウの表示切替
-            RETURN_TO_DEV,  // 開発エントランスへ戻る
+            MAP_NEW,                // 新規マップ作成
+            MAP_LOAD,               // 既存のマップをロード
+            MAP_SAVE,               // 編集中のマップをセーブ
+            NAVI_SWITCH,            // ナビゲーションウィンドウの表示切替
+            WALL_THROUGH_SWITCH,    // 状態ウィンドウの表示切替
+            RETURN_TO_DEV,          // 開発エントランスへ戻る
 
-            MAX
+            MAX,
+            NONE,                   // 未決定時
         } //enum MAIN_CONSOLE_ITEM
 
 
@@ -44,7 +47,10 @@ namespace nangka
         public interface IEntityMapEditorConsole : IEntity
         {
             CONSOLE_MODE GetDetectedMode();
+            MAIN_CONSOLE_ITEM GetDecidedItem();
+            void Cancel(bool bHide);
             void ChangeMode();
+            Transform GetRootCanvasTransform();
 
         } //interface IEntityMapEditorConsole
 
@@ -74,8 +80,23 @@ namespace nangka
 
             private GameObject refObjNaviWindow;
             private GameObject refObjMainConsole;
+            private GameObject refObjStateWindow;
 
             private MAIN_CONSOLE_ITEM _selectItem;
+            private MAIN_CONSOLE_ITEM _decidedItem;
+            public MAIN_CONSOLE_ITEM GetDecidedItem() { return this._decidedItem; }
+
+            private GameObject _rootCanvas;
+            public Transform GetRootCanvasTransform() { return this._rootCanvas.transform; }
+
+            private bool _bShowNavi;
+            private bool _bThroughWall;
+
+            public interface IMapDataAccessor
+            {
+                void ThroughWall(bool bThrough);
+                bool ChangeWall(int x, int y, Direction dir);
+            }
 
 
             //------------------------------------------------------------------
@@ -122,17 +143,26 @@ namespace nangka
                 yield return SceneManager.LoadSceneAsync(Define.SCENE_NAME_MAPEDITOR_CONSOLE, LoadSceneMode.Additive);
 
                 var scene = SceneManager.GetSceneByName(Define.SCENE_NAME_MAPEDITOR_CONSOLE);
-                var canvas = scene.GetRootGameObjects().First(obj => obj.GetComponent<Canvas>() != null).GetComponent<Canvas>();
+                this._rootCanvas = scene.GetRootGameObjects().First(obj => obj.GetComponent<Canvas>() != null);
+                var canvas = this._rootCanvas.GetComponent<Canvas>();
                 var component = canvas.GetComponent<ObjectTable>();
 
                 this.refObjNaviWindow = component.objectTable[0];
                 this.refObjMainConsole = component.objectTable[1];
+                this.refObjStateWindow = component.objectTable[2];
 
                 this._mode = CONSOLE_MODE.HIDDEN;
                 this._tempMode = CONSOLE_MODE.HIDDEN;
                 this.funcEventProc = this.EventProc_Hidden;
 
                 this.Select(MAIN_CONSOLE_ITEM.MAP_NEW);
+                this._decidedItem = MAIN_CONSOLE_ITEM.NONE;
+
+                this._bShowNavi = true;
+                this.FlashNavi();
+
+                this._bThroughWall = false;
+                this.FlashWallThrough();
 
                 this._bReadyLogic = true;
                 yield return null;
@@ -162,6 +192,10 @@ namespace nangka
                 {
                     this._tempMode = CONSOLE_MODE.MAIN;
                 }
+                else if (Input.GetKeyDown(KeyCode.Return))
+                {
+                    this.ChangeWall();
+                }
             }
 
             private void EventProc_Main()
@@ -177,6 +211,86 @@ namespace nangka
                 else if (Input.GetKeyDown(KeyCode.DownArrow))
                 {
                     this.SelectDown();
+                }
+                else if (Input.GetKeyDown(KeyCode.Return))
+                {
+                    this._decidedItem = this._selectItem;
+                    this._tempMode = CONSOLE_MODE.DECIDED;
+                }
+
+                this.SwitchProc();
+            }
+
+            private void SwitchProc()
+            {
+                if (this.GetDetectedMode() != CONSOLE_MODE.DECIDED) return;
+                switch (this.GetDecidedItem())
+                {
+                    case MAIN_CONSOLE_ITEM.NAVI_SWITCH: this.SwitchNavi(); break;
+                    case MAIN_CONSOLE_ITEM.WALL_THROUGH_SWITCH: this.SwitchWallThrough(); break;
+                    default: break;
+                }
+                this.Cancel(false);
+            }
+
+            private void SwitchNavi()
+            {
+                this._bShowNavi ^= true;
+                this.FlashNavi();
+            }
+            private void FlashNavi()
+            {
+                var component = this.refObjStateWindow.GetComponent<ObjectTable>();
+                component = component.objectTable[0].GetComponent<ObjectTable>();
+                Text compText = component.objectTable[0].GetComponent<Text>();
+                if (compText != null)
+                {
+                    compText.text = "Navigation " + (this._bShowNavi ? "ON" : "OFF");
+                }
+            }
+
+            private void SwitchWallThrough()
+            {
+                this._bThroughWall ^= true;
+                this.FlashWallThrough();
+            }
+            private void FlashWallThrough()
+            {
+                var component = this.refObjStateWindow.GetComponent<ObjectTable>();
+                component = component.objectTable[1].GetComponent<ObjectTable>();
+                Text compText = component.objectTable[0].GetComponent<Text>();
+                if (compText != null)
+                {
+                    compText.text = "Wall-Through " + (this._bThroughWall ? "ON" : "OFF");
+                }
+
+                IEntityMapData iMapData = Utility.GetIEntityMapData();
+                IMapDataAccessor acc = (IMapDataAccessor)(iMapData.GetOwnEntity());
+                acc.ThroughWall(this._bThroughWall);
+            }
+
+            //------------------------------------------------------------------
+            // 壁操作処理
+            //------------------------------------------------------------------
+
+            private void ChangeWall()
+            {
+                IEntityMapData iMapData = Utility.GetIEntityMapData();
+                IMapDataAccessor acc = (IMapDataAccessor)(iMapData.GetOwnEntity());
+
+                IEntityPlayerData iPlayerData = Utility.GetIEntityPlayerData();
+                bool bChanged = acc.ChangeWall(iPlayerData.GetX(), iPlayerData.GetY(), iPlayerData.GetDir());
+
+                if (bChanged)
+                {
+                    // Structure の更新
+                    IEntityStructure iStructure = Utility.GetIEntityStructure();
+                    Texture tex = iMapData.GetTexture(iPlayerData.GetX(), iPlayerData.GetY(), iPlayerData.GetDir());
+                    iStructure.ChangeWall(0, 0, iPlayerData.GetDir(), tex);
+
+                    // MiniMap の更新
+                    IEntityMiniMap iMiniMap = Utility.GetIEntityMiniMap();
+                    iMiniMap.Flash(iMapData, iPlayerData.GetX(), iPlayerData.GetY(), true);
                 }
             }
 
@@ -225,6 +339,12 @@ namespace nangka
                 return mode;
             }
 
+            public void Cancel(bool bHide)
+            {
+                this._tempMode = bHide ? CONSOLE_MODE.HIDDEN : CONSOLE_MODE.MAIN;
+                this.ChangeMode();
+            }
+
             public void ChangeMode()
             {
                 if (this.IsReadyLogic() && this.IsDetectedModeChange())
@@ -251,8 +371,18 @@ namespace nangka
 
             private void ChangeModeProc_MainToHidden()
             {
-                this.refObjNaviWindow.SetActive(true);
+                this.refObjNaviWindow.SetActive(this._bShowNavi);
                 this.refObjMainConsole.SetActive(false);
+            }
+
+            private void ChangeModeProc_DecidedToMain()
+            {
+                this._decidedItem = MAIN_CONSOLE_ITEM.NONE;
+            }
+            private void ChangeModeProc_DecidedToHidden()
+            {
+                this.ChangeModeProc_DecidedToMain();
+                this.ChangeModeProc_MainToHidden();
             }
 
             //------------------------------------------------------------------
@@ -286,12 +416,14 @@ namespace nangka
             {
                 ChangeModeProc func = null;
                 if (fromMode == CONSOLE_MODE.MAIN) func = this.ChangeModeProc_MainToHidden;
+                else if (fromMode == CONSOLE_MODE.DECIDED) func = this.ChangeModeProc_DecidedToHidden;
                 return func;
             }
             private ChangeModeProc GetChangeModeProc_ToMain(CONSOLE_MODE fromMode)
             {
                 ChangeModeProc func = null;
                 if (fromMode == CONSOLE_MODE.HIDDEN) func = this.ChangeModeProc_HiddenToMain;
+                else if (fromMode == CONSOLE_MODE.DECIDED) func = this.ChangeModeProc_DecidedToMain;
                 return func;
             }
 

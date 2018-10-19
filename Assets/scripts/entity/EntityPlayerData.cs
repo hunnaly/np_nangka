@@ -26,6 +26,7 @@ namespace nangka
             Direction GetDir();
             void SetDir(Direction dir);
             void SetPos(int x, int y);
+            bool IsForceOpenMiniMap();
 
             EntityPlayerData GetOwnEntity();
 
@@ -64,6 +65,9 @@ namespace nangka
             public Direction GetDir() { return this._dir; }
             public void SetDir(Direction dir) { this._dir = dir; }
 
+            private bool _bForceOpenMiniMap;
+            public bool IsForceOpenMiniMap() { return this._bForceOpenMiniMap; }
+
             public EntityPlayerData GetOwnEntity() { return this; }
 
 
@@ -100,6 +104,13 @@ namespace nangka
                 if (this._bRecreating == false) return;
 
                 this.SetDir(dir);
+            }
+
+            void EntityRecreator.IPlayerDataRecreator.SetForceOpenMiniMap(bool bForceOpen)
+            {
+                if (this._bRecreating == false) return;
+
+                this._bForceOpenMiniMap = bForceOpen;
             }
 
             void EntityRecreator.IPlayerDataRecreator.End()
@@ -142,6 +153,7 @@ namespace nangka
                 this._x = 0;
                 this._y = 0;
                 this._dir = 0;
+                this._bForceOpenMiniMap = false;
             }
 
         } //class EntityPlayerData

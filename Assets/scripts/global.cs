@@ -32,10 +32,24 @@ namespace nangka {
     //---------------------------------------------------------------
     public sealed class Global
     {
+        //---------------------------------------------------------------
         // Gloabl インスタンス
+        //---------------------------------------------------------------
+        private Global() { }
         private static Global instance = new Global();
+        public static Global Instance { get { return instance; } }
 
+        //---------------------------------------------------------------
+        // 初期化
+        //---------------------------------------------------------------
+        public void Initialize(NpAppBase app)
+        {
+            this.entityController = app.GetEntityController();
+        }
+
+        //---------------------------------------------------------------
         // PlayerCamera
+        //---------------------------------------------------------------
         private Camera _cameraPlayer;
         public Camera cameraPlayer { get { return this._cameraPlayer; } }
 
@@ -48,28 +62,18 @@ namespace nangka {
             this._objCameraPlayerBase = (cameraBase == null) ? (GameObject)camera.gameObject : cameraBase;
         }
 
-
+        //---------------------------------------------------------------
         // 共有参照データ
+        //---------------------------------------------------------------
         private INpEntityController entityController = null;
-        public INpEntityController EntityCtrl
-        {
-            get { return this.entityController; }
-        }
+        public INpEntityController EntityCtrl { get { return this.entityController; } }
+
+        //---------------------------------------------------------------
+        // 共有データ
+        // むやみに利用しないこと！
+        //---------------------------------------------------------------
 
 
-        // 外部からのインスタンス生成禁止
-        private Global() { }
-
-        // Global インスタンス提供
-        public static Global Instance
-        {
-            get { return instance; }
-        }
-
-        public void Initialize(NpAppBase app)
-        {
-            this.entityController = app.GetEntityController();
-        }
 
     } //class Global
 

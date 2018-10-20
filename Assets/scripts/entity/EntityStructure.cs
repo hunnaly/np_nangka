@@ -399,47 +399,54 @@ namespace nangka
             private GameObject CreateWallUp(GameObject parent)
             {
                 Vector3 trans = new Vector3(0.0f, 4.0f, 0.0f);
-                Quaternion rote = Quaternion.Euler(0.0f, 0.0f, 180.0f);
-                return this.CreateWallReal(parent, trans, rote);
+                Vector3 rotDelta = new Vector3(0.0f, 0.0f, 180.0f);
+                return this.CreateWallReal(parent, trans, rotDelta);
             }
 
             private GameObject CreateWallDown(GameObject parent)
             {
-                return this.CreateWallReal(parent, Vector3.zero, Quaternion.identity);
+                return this.CreateWallReal(parent, Vector3.zero, Vector3.zero);
             }
 
             private GameObject CreateWallNorth(GameObject parent)
             {
                 Vector3 trans = new Vector3(0.0f, 2.0f, 2.0f);
-                Quaternion rote = Quaternion.Euler(-90.0f, 0.0f, 0.0f);
-                return this.CreateWallReal(parent, trans, rote);
+                Vector3 rotDelta = new Vector3(90.0f, 180.0f, 0.0f);
+                return this.CreateWallReal(parent, trans, rotDelta);
             }
 
             private GameObject CreateWallSouth(GameObject parent)
             {
                 Vector3 trans = new Vector3(0.0f, 2.0f, -2.0f);
-                Quaternion rote = Quaternion.Euler(-90.0f, 180.0f, 0.0f);
-                return this.CreateWallReal(parent, trans, rote);
+                Vector3 rotDelta = new Vector3(90.0f, 0.0f, 0.0f);
+                return this.CreateWallReal(parent, trans, rotDelta);
             }
 
             private GameObject CreateWallEast(GameObject parent)
             {
                 Vector3 trans = new Vector3(2.0f, 2.0f, 0.0f);
-                Quaternion rote = Quaternion.Euler(-90.0f, 90.0f, 0.0f);
-                return this.CreateWallReal(parent, trans, rote);
+                Vector3 rotDelta = new Vector3(90.0f, -90.0f, 0.0f);
+                return this.CreateWallReal(parent, trans, rotDelta);
             }
 
             private GameObject CreateWallWest(GameObject parent)
             {
                 Vector3 trans = new Vector3(-2.0f, 2.0f, 0.0f);
-                Quaternion rote = Quaternion.Euler(-90.0f, -90.0f, 0.0f);
-                return this.CreateWallReal(parent, trans, rote);
+                Vector3 rotDelta = new Vector3(90.0f, 90.0f, 0.0f);
+                return this.CreateWallReal(parent, trans, rotDelta);
             }
 
-            private GameObject CreateWallReal(GameObject parent, Vector3 trans, Quaternion rote)
+            private GameObject CreateWallReal(GameObject parent, Vector3 trans, Vector3 rotDelta)
             {
-                GameObject objWall = (GameObject)Object.Instantiate(this.refPrefabPlane, trans, rote);
+                GameObject objWall = (GameObject)Object.Instantiate(this.refPrefabPlane, trans, Quaternion.identity);
                 objWall.transform.SetParent(parent.transform, false);
+
+                Quaternion rotation = objWall.transform.localRotation;
+                Vector3 rotationAngles = rotation.eulerAngles;
+                rotationAngles += rotDelta;
+                rotation = Quaternion.Euler(rotationAngles);
+                objWall.transform.localRotation = rotation;
+
                 objWall.SetActive(false);
                 return objWall;
             }

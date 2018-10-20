@@ -64,7 +64,29 @@ namespace nangka
                 private int _height;
                 public int GetHeight() { return this._height; }
 
-                private Dictionary<byte, string> _tableTexturePath;
+                [Serializable]
+                public class TextureInfo
+                {
+                    private byte _idx;
+                    public byte idx { get { return this._idx; } }
+
+                    private string _filePathName;
+                    public string filePathName { get { return this._filePathName; } }
+
+                    private string _typeName;
+                    public string typeName { get { return this._typeName; } }
+
+                    public TextureInfo() : this(0, null, "None") { }
+
+                    public TextureInfo(byte idx, string filePathName, string typeName)
+                    {
+                        this._idx = idx;
+                        this._filePathName = filePathName;
+                        this._typeName = typeName;
+                    }
+                }
+                private Dictionary<byte, TextureInfo> _tableTextureInfo;
+
                 private BlockData[] _tableBlockData;
 
 
@@ -86,15 +108,15 @@ namespace nangka
                     for (int i = 0; i < this._tableBlockData.Length; i++) { this._tableBlockData[i].idTip = null; }
                 }
 
-                Dictionary<byte, string> IMapRawDataAccessor.GetTexturePathTable() { return this._tableTexturePath; }
-                Dictionary<byte, string> IMapRawDataAccessor.NewTexturePathTable() { return (this._tableTexturePath = new Dictionary<byte, string>()); }
-                void IMapRawDataAccessor.ClearTexturePathTable() { this.ClearTexturePathTable(); }
-                void IMapRawDataAccessor.ReleaseTexturePathTable() { this.ClearTexturePathTable(); this._tableTexturePath = null; }
+                Dictionary<byte, TextureInfo> IMapRawDataAccessor.GetTextureInfoTable() { return this._tableTextureInfo; }
+                Dictionary<byte, TextureInfo> IMapRawDataAccessor.NewTextureInfoTable() { return (this._tableTextureInfo = new Dictionary<byte, TextureInfo>()); }
+                void IMapRawDataAccessor.ClearTextureInfoTable() { this.ClearTextureInfoTable(); }
+                void IMapRawDataAccessor.ReleaseTextureInfoTable() { this.ClearTextureInfoTable(); this._tableTextureInfo = null; }
 
-                private void ClearTexturePathTable()
+                private void ClearTextureInfoTable()
                 {
-                    if (this._tableTexturePath == null) return;
-                    this._tableTexturePath.Clear();
+                    if (this._tableTextureInfo == null) return;
+                    this._tableTextureInfo.Clear();
                 }
 
             } //class MapData
@@ -110,10 +132,10 @@ namespace nangka
                 void ClearBlockData();
                 void ReleaseBlockData();
 
-                Dictionary<byte, string> GetTexturePathTable();
-                Dictionary<byte, string> NewTexturePathTable();
-                void ClearTexturePathTable();
-                void ReleaseTexturePathTable();
+                Dictionary<byte, MapData.TextureInfo> GetTextureInfoTable();
+                Dictionary<byte, MapData.TextureInfo> NewTextureInfoTable();
+                void ClearTextureInfoTable();
+                void ReleaseTextureInfoTable();
 
             } //interface IMapRawDataAccessor
 
@@ -195,22 +217,23 @@ namespace nangka
                 acc.SetName(name);
                 acc.SetWidth(width);
                 acc.SetHeight(height);
-                acc.NewTexturePathTable();
+                acc.NewTextureInfoTable();
                 acc.NewBlockData(num);
 
                 this.tableThrough = new bool[num];
             }
 
-            void EntityRecreator.IMapDataRecreator.AddTexture(byte id, string path)
+            void EntityRecreator.IMapDataRecreator.AddTexture(byte idx, string fileName, string typeName)
             {
                 if (this._bRecreating == false) return;
 
                 IMapRawDataAccessor acc = (IMapRawDataAccessor)this._data;
-                Dictionary<byte, string> table = acc.GetTexturePathTable();
+                Dictionary<byte, MapData.TextureInfo> table = acc.GetTextureInfoTable();
                 if (table == null) return;
-                if (id == 0) return;
+                if (idx == 0) return;
 
-                table.Add(id, path);
+                MapData.TextureInfo info = new MapData.TextureInfo(idx, fileName, typeName);
+                table.Add(idx, info);
             }
 
             void EntityRecreator.IMapDataRecreator.SetBlock(int idx, BlockData data)
@@ -241,14 +264,15 @@ namespace nangka
             private void ReadyTexture()
             {
                 IMapRawDataAccessor acc = (IMapRawDataAccessor)this._data;
-                Dictionary<byte, string> table = acc.GetTexturePathTable();
+                Dictionary<byte, MapData.TextureInfo> table = acc.GetTextureInfoTable();
                 if (table == null) return;
 
                 IEntityTextureResources iTexRes = Utility.GetIEntityTextureResources();
-                foreach (KeyValuePair<byte, string> pair in table)
+                foreach (KeyValuePair<byte, MapData.TextureInfo> pair in table)
                 {
-                    Texture tex = iTexRes.Load(pair.Value);
-                    this.tableTexture.Add(pair.Key, tex);
+                    MapData.TextureInfo info = pair.Value;
+                    Texture tex = iTexRes.Load(info.filePathName);
+                    this.tableTexture.Add(info.idx, tex);
                 }
             }
 
@@ -257,24 +281,13 @@ namespace nangka
             // データ設定メソッド（EntityMapEditorConsole用）
             //------------------------------------------------------------------
 
-            public enum WALL_STATE : int
-            {
-                NO_WALL,                    // 壁なし(当たり判定なし)
-                WALL,                       // 壁あり(当たり判定あり)
-                WALL_WITHOUT_COLLISION,     // 壁あり(当たり判定なし)
-                NO_WALL_WITH_COLLISION,     // 壁なし(当たり判定あり)
-
-                MAX
-            } //enum WALL_STATE
-
             void EntityMapEditorConsole.IMapDataAccessor.ThroughWall(bool bThrough)
             {
                 this._bThroughWall = bThrough;
             }
 
-            // 以下の順で切り替えていく
-            // 壁(当たり判定あり)→壁(当たり判定なし)→壁なし(当たり判定あり)→壁なし(当たり判定なし)
-            // bBothSide = true のときは、両サイドに対して上記切替え処理を行う
+            // Texture に登録されている順に切り替えていく
+            // bBothSide = true のときは、両サイドに対して切替処理を行う
             bool EntityMapEditorConsole.IMapDataAccessor.ChangeWall(int x, int y, Direction dir, bool bBothSide)
             {
                 bool bChanged = ((this.IsOutOfRange(x, y) == false) && this.CheckMoveInRange(x, y, dir));
@@ -292,42 +305,65 @@ namespace nangka
                 return bChanged;
             }
 
-            WALL_STATE EntityMapEditorConsole.IMapDataAccessor.GetWallState(int x, int y, Direction dir)
+            bool EntityMapEditorConsole.IMapDataAccessor.ChangeCollision(int x, int y, Direction dir, bool bBothSide)
             {
-                WALL_STATE state = WALL_STATE.NO_WALL;
-
-                if (this.IsOutOfRange(x, y) == false)
+                bool bChanged = ((this.IsOutOfRange(x, y) == false) && this.CheckMoveInRange(x, y, dir));
+                if (bChanged)
                 {
                     IMapRawDataAccessor acc = (IMapRawDataAccessor)this._data;
                     BlockData[] table = acc.GetBlockData();
-                    state = this.GetWallState(this.GetBlock(table, x, y), dir);
+
+                    this.ChangeCollision(this.GetBlock(table, x, y), dir);
+                    if (bBothSide)
+                    {
+                        this.ChangeCollision(this.GetAdvanceBlock(table, x, y, dir), Utility.GetOppositeDirection(dir));
+                    }
                 }
-                return state;
+                return bChanged;
+            }
+
+            string EntityMapEditorConsole.IMapDataAccessor.GetWallTypeName(int x, int y, Direction dir)
+            {
+                if (this.IsOutOfRange(x, y)) return null;
+
+                IMapRawDataAccessor acc = (IMapRawDataAccessor)this._data;
+                BlockData[] tableBlock = acc.GetBlockData();
+                byte idx = this.GetWallType(this.GetBlock(tableBlock, x, y), dir);
+
+                Dictionary<byte, MapData.TextureInfo> tableTextureInfo = acc.GetTextureInfoTable();
+                string name = "none";
+                if (tableTextureInfo.ContainsKey(idx))
+                {
+                    name = tableTextureInfo[idx].typeName;
+                }
+                return name;
+            }
+
+            bool EntityMapEditorConsole.IMapDataAccessor.GetWallCollision(int x, int y, Direction dir)
+            {
+                if (this.IsOutOfRange(x, y)) return false;
+
+                IMapRawDataAccessor acc = (IMapRawDataAccessor)this._data;
+                BlockData[] tableBlock = acc.GetBlockData();
+                BlockData data = this.GetBlock(tableBlock, x, y);
+
+                return ((data.collision & (uint)(1 << (int)dir)) != 0);
             }
 
             private void ChangeWall(BlockData data, Direction dir)
             {
-                WALL_STATE state = this.GetNextWallState(this.GetWallState(data, dir));
-                this.SetWall(data, dir, state);
+                byte idTip = this.GetNextWallType(this.GetWallType(data, dir));
+                this.SetWall(data, dir, idTip);
             }
 
-            private void SetWall(BlockData data, Direction dir, WALL_STATE state)
+            private void ChangeCollision(BlockData data, Direction dir)
             {
-                byte idTip = 0;
-                bool bCollision = false;
+                data.collision ^= (uint)(1 << (int)dir);
+            }
 
-                switch (state)
-                {
-                    case WALL_STATE.WALL: idTip = 2; bCollision = true; break;
-                    case WALL_STATE.WALL_WITHOUT_COLLISION: idTip = 2; break;
-                    case WALL_STATE.NO_WALL_WITH_COLLISION: bCollision = true; break;
-                    default: break;
-                }
-
+            private void SetWall(BlockData data, Direction dir, byte idTip)
+            {
                 data.idTip[(int)dir] = idTip;
-                data.collision = bCollision
-                    ? (uint)(data.collision | (uint)(1 << (int)dir))
-                    : (uint)(data.collision ^ (uint)(1 << (int)dir));
             }
 
             private BlockData GetBlock(BlockData[] table, int x, int y)
@@ -349,19 +385,15 @@ namespace nangka
                 return this.GetBlock(table, x, y);
             }
 
-            private WALL_STATE GetWallState(BlockData data, Direction dir)
+            private byte GetWallType(BlockData data, Direction dir)
             {
-                byte idTip = data.idTip[(int)dir];
-                bool bCollision = ((data.collision & (uint)(1 << (int)dir)) != 0);
-
-                return (idTip == 0)
-                    ? (bCollision ? WALL_STATE.NO_WALL_WITH_COLLISION : WALL_STATE.NO_WALL)
-                    : (bCollision ? WALL_STATE.WALL : WALL_STATE.WALL_WITHOUT_COLLISION);
+                return data.idTip[(int)dir];
             }
 
-            private WALL_STATE GetNextWallState(WALL_STATE state)
+            private byte GetNextWallType(byte idTip)
             {
-                return (WALL_STATE)(((int)state + 1) % (int)WALL_STATE.MAX);
+                int max = this.tableTexture.Count();
+                return (byte)(((int)idTip + 1) % max);
             }
 
 
@@ -453,15 +485,15 @@ namespace nangka
             private void ClearTextureTable()
             {
                 IMapRawDataAccessor acc = (IMapRawDataAccessor)this._data;
-                Dictionary<byte, string> table = acc.GetTexturePathTable();
+                Dictionary<byte, MapData.TextureInfo> table = acc.GetTextureInfoTable();
                 if (table != null)
                 {
-                    foreach (KeyValuePair<byte, string> pair in table)
+                    foreach (KeyValuePair<byte, MapData.TextureInfo> pair in table)
                     {
-                        Utility.GetIEntityTextureResources().Unload(pair.Value);
+                        Utility.GetIEntityTextureResources().Unload(pair.Value.filePathName);
                     }
                 }
-                acc.ClearTexturePathTable();
+                acc.ClearTextureInfoTable();
 
                 if (this.tableTexture != null)
                 {
@@ -473,7 +505,7 @@ namespace nangka
                 this.ClearTextureTable();
 
                 IMapRawDataAccessor acc = (IMapRawDataAccessor)this._data;
-                acc.ReleaseTexturePathTable();
+                acc.ReleaseTextureInfoTable();
 
                 this.tableTexture = null;
             }

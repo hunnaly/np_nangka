@@ -66,14 +66,22 @@ namespace nangka
         {
             return FILE_PATH_MAP;
         }
-        
+
 
         //----------------------------------------------------------------
         // Textureパス名 (ダミーデータ用)
         //----------------------------------------------------------------
-        public static string RES_PATH_TEXTURE_WALL_BRICK_CEILING = "Textures/block02";
-        public static string RES_PATH_TEXTURE_WALL_BRICK_SIDEWALK = "Textures/block02";
-        public static string RES_PATH_TEXTURE_WALL_BRICK_SIDEWALL = "Textures/block01";
+        public static string RES_PATH_TEXTURE = "Textures/";
+        public static string RES_PATH_TEXTURE_WALL_BRICK_CEILING = RES_PATH_TEXTURE + "block02";
+        public static string RES_PATH_TEXTURE_WALL_BRICK_SIDEWALK = RES_PATH_TEXTURE + "block02";
+        public static string RES_PATH_TEXTURE_WALL_BRICK_WALL = RES_PATH_TEXTURE + "block01";
+        public static string RES_PATH_TEXTURE_WALL_DOOR = RES_PATH_TEXTURE + "door01";
+        public static string RES_PATH_TEXTURE_WALL_DOOR_LOCK = RES_PATH_TEXTURE + "door02";
+        public static string RES_PATH_TEXTURE_WALL_BREAKABLE_WALL = RES_PATH_TEXTURE + "block03";
+        public static string RES_PATH_TEXTURE_WALL_BREAKABLE_WALL_FIRE = RES_PATH_TEXTURE + "block04";
+        public static string RES_PATH_TEXTURE_WALL_BREAKABLE_WALL_ICE = RES_PATH_TEXTURE + "block05";
+        public static string RES_PATH_TEXTURE_WALL_BREAKABLE_WALL_THUNDER = RES_PATH_TEXTURE + "block06";
+
 
     } //class Define
 

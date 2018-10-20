@@ -101,7 +101,10 @@ namespace nangka
             {
                 void ThroughWall(bool bThrough);
                 bool ChangeWall(int x, int y, Direction dir, bool bBothSide);
-                EntityMapData.WALL_STATE GetWallState(int x, int y, Direction dir);
+                bool ChangeCollision(int x, int y, Direction dir, bool bBothSide);
+
+                string GetWallTypeName(int x, int y, Direction dir);
+                bool GetWallCollision(int x, int y, Direction dir);
             }
 
             public interface IDungeonAccessor
@@ -217,6 +220,11 @@ namespace nangka
                     this.ChangeWall();
                     this.FlashWallState();
                 }
+                else if (Input.GetKeyDown(KeyCode.RightShift))
+                {
+                    this.ChangeCollision();
+                    this.FlashWallState();
+                }
             }
 
             private void EventProc_Main()
@@ -313,6 +321,15 @@ namespace nangka
             // 壁操作処理
             //------------------------------------------------------------------
 
+            private void ChangeCollision()
+            {
+                IEntityMapData iMapData = Utility.GetIEntityMapData();
+                IMapDataAccessor acc = (IMapDataAccessor)(iMapData.GetOwnEntity());
+
+                IEntityPlayerData iPlayerData = Utility.GetIEntityPlayerData();
+                acc.ChangeCollision(iPlayerData.GetX(), iPlayerData.GetY(), iPlayerData.GetDir(), this._bBothSideChangeWall);
+            }
+
             private void ChangeWall()
             {
                 IEntityMapData iMapData = Utility.GetIEntityMapData();
@@ -334,23 +351,14 @@ namespace nangka
                 IMapDataAccessor acc = (IMapDataAccessor)(iMapData.GetOwnEntity());
 
                 IEntityPlayerData iPlayerData = Utility.GetIEntityPlayerData();
-                EntityMapData.WALL_STATE state = acc.GetWallState(iPlayerData.GetX(), iPlayerData.GetY(), iPlayerData.GetDir());
+                string name = acc.GetWallTypeName(iPlayerData.GetX(), iPlayerData.GetY(), iPlayerData.GetDir());
+                bool bCollision = acc.GetWallCollision(iPlayerData.GetX(), iPlayerData.GetY(), iPlayerData.GetDir());
 
-                this.SetWallState(state);
+                this.SetWallState(name, bCollision);
             }
 
-            private void SetWallState(EntityMapData.WALL_STATE state)
+            private void SetWallState(string name, bool bCollision)
             {
-                bool bWall = false;
-                bool bCollision = false;
-                switch (state)
-                {
-                    case EntityMapData.WALL_STATE.WALL: bWall = true; bCollision = true; break;
-                    case EntityMapData.WALL_STATE.WALL_WITHOUT_COLLISION: bWall = true; break;
-                    case EntityMapData.WALL_STATE.NO_WALL_WITH_COLLISION: bCollision = true; break;
-                    default: break;
-                }
-
                 var component = this.refObjWallStateWindow.GetComponent<ObjectTable>();
                 var tempComp = component.objectTable[0].GetComponent<ObjectTable>();
                 Text textWall = tempComp.objectTable[0].GetComponent<Text>();
@@ -358,8 +366,8 @@ namespace nangka
                 tempComp = component.objectTable[1].GetComponent<ObjectTable>();
                 Text textCollision = tempComp.objectTable[0].GetComponent<Text>();
 
-                textWall.text = "Wall " + (bWall ? "ON" : "OFF");
-                textCollision.text = "Collision " + (bCollision ? "ON" : "OFF");
+                textWall.text = "Type: " + name;
+                textCollision.text = "Collision: " + (bCollision ? "ON" : "OFF");
             }
 
             private void FlashAdvanceBlock()

@@ -60,7 +60,7 @@ namespace nangka
             public interface IMapDataRecreator
             {
                 void Begin(string name, int width, int height);
-                void AddTexture(byte id, string path);
+                void AddTexture(byte idx, string filePathName, string typeName);
                 void SetBlock(int idx, EntityMapData.BlockData data);
                 void End();
 
@@ -259,8 +259,7 @@ namespace nangka
             {
                 recreator.Begin("new map", 8, 8);
 
-                recreator.AddTexture(1, Define.RES_PATH_TEXTURE_WALL_BRICK_CEILING);
-                recreator.AddTexture(2, Define.RES_PATH_TEXTURE_WALL_BRICK_SIDEWALL);
+                this.SetNormalTexture(recreator);
 
                 for (int y=0; y<8; y++)
                 {
@@ -315,8 +314,7 @@ namespace nangka
 
                 recreator.Begin("dummy", 8, 8);
 
-                recreator.AddTexture(1, Define.RES_PATH_TEXTURE_WALL_BRICK_CEILING);
-                recreator.AddTexture(2, Define.RES_PATH_TEXTURE_WALL_BRICK_SIDEWALL);
+                this.SetNormalTexture(recreator);
 
                 recreator.SetBlock(0, DNewBlock(2, 0, 2, 2, 1, 1, true, false, true, true));
                 recreator.SetBlock(1, DNewBlock(2, 0, 2, 0, 1, 1, true, false, true, false));
@@ -392,6 +390,16 @@ namespace nangka
 
                 recreator.End();
             }
+
+            private void SetNormalTexture(IMapDataRecreator recreator)
+            {
+                recreator.AddTexture(1, Define.RES_PATH_TEXTURE_WALL_BRICK_CEILING, "Ceiling / SideWalk");
+                recreator.AddTexture(2, Define.RES_PATH_TEXTURE_WALL_BRICK_WALL, "Wall");
+                recreator.AddTexture(3, Define.RES_PATH_TEXTURE_WALL_DOOR, "Door");
+                recreator.AddTexture(4, Define.RES_PATH_TEXTURE_WALL_DOOR_LOCK, "Locked Door");
+                recreator.AddTexture(5, Define.RES_PATH_TEXTURE_WALL_BREAKABLE_WALL, "Breakable Wall");
+            }
+
             private EntityMapData.BlockData DNewBlock(
                 byte n, byte e, byte s, byte w, byte u, byte d,
                 bool bn, bool be, bool bs, bool bw)

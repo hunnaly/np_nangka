@@ -35,6 +35,7 @@ namespace nangka
             NAVI_SWITCH,            // ナビゲーションウィンドウの表示切替
             WALL_THROUGH_SWITCH,    // 状態ウィンドウの表示切替
             BOTH_SIDE_SWITCH,       // 壁の生成／破棄を両面で行うかどうかの切替
+            TEXTURE_SETTING,        // テクスチャ設定
             RETURN_TO_DEV,          // 開発エントランスへ戻る
 
             MAX,
@@ -248,6 +249,25 @@ namespace nangka
                 }
 
                 this.SwitchProc();
+
+                this.TentativeItemProc();
+            }
+
+            // 項目は用意したけど実装はまだこれからというものをここに入れておく。
+            private void TentativeItemProc()
+            {
+                bool b = false;
+                switch (this.GetDecidedItem())
+                {
+                    case MAIN_CONSOLE_ITEM.TEXTURE_SETTING:
+                    case MAIN_CONSOLE_ITEM.RETURN_TO_DEV:
+                        b = true;
+                        break;
+                }
+                if (!b) return;
+
+                this._decidedItem = MAIN_CONSOLE_ITEM.NONE;
+                this._tempMode = CONSOLE_MODE.MAIN;
             }
 
             private void SwitchProc()

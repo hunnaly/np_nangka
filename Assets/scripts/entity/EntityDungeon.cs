@@ -22,13 +22,16 @@ namespace nangka
             void Reset();
             void Restart();
 
+            EntityDungeon GetOwnEntity();
+
         } //interface IEntityDungeon
 
 
         //------------------------------------------------------------------
         // EntityDungeon
         //------------------------------------------------------------------
-        public class EntityDungeon : NpEntity, IEntityDungeon
+        public class EntityDungeon : NpEntity, IEntityDungeon,
+            EntityMapEditorConsole.IDungeonAccessor
         {
             //------------------------------------------------------------------
             // 準備処理関連変数
@@ -42,6 +45,32 @@ namespace nangka
             private int movePreX;
             private int movePreY;
             private Vector3 vecMoveDelta;
+
+            public EntityDungeon GetOwnEntity() { return this; }
+
+
+            //------------------------------------------------------------------
+            // EntityMapEditorConsole用
+            //------------------------------------------------------------------
+
+            public delegate void OnMoveProc();
+            private OnMoveProc funcOnMoveProc;
+
+            void EntityMapEditorConsole.IDungeonAccessor.SetOnMoveProc(OnMoveProc func)
+            {
+                if (this.funcOnMoveProc == null) this.funcOnMoveProc = func;
+                else this.funcOnMoveProc += func;
+            }
+
+            void EntityMapEditorConsole.IDungeonAccessor.ResetOnMoveProc()
+            {
+                this.funcOnMoveProc = null;
+            }
+
+
+            //------------------------------------------------------------------
+            // 公開メソッド
+            //------------------------------------------------------------------
 
             public void Run()
             {
@@ -59,8 +88,6 @@ namespace nangka
 
             public void Restart()
             {
-                Debug.Log("-------Restart()----------");
-
                 if (!this.IsReadyLogic()) return;
 
                 this._bReadyLogic = false;
@@ -212,19 +239,24 @@ namespace nangka
 
                 IEntityPlayerData iPlayerData = Utility.GetIEntityPlayerData();
 
+                bool bMoveOrRotate = false;
+
                 if (Input.GetKey(KeyCode.LeftArrow))
                 {
                     iPlayer.RotateLeft();
+                    bMoveOrRotate = true;
                 }
                 else if (Input.GetKey(KeyCode.RightArrow))
                 {
                     iPlayer.RotateRight();
+                    bMoveOrRotate = true;
                 }
                 else if (Input.GetKey(KeyCode.UpArrow))
                 {
                     if (this.builder.CheckMoveAndScroll(iPlayerData.GetDir()))
                     {
                         iPlayer.MoveFront();
+                        bMoveOrRotate = true;
                     }
                 }
                 else if (Input.GetKey(KeyCode.DownArrow))
@@ -232,7 +264,13 @@ namespace nangka
                     if (this.builder.CheckMoveAndScroll(Utility.GetOppositeDirection(iPlayerData.GetDir())))
                     {
                         iPlayer.MoveBack();
+                        bMoveOrRotate = true;
                     }
+                }
+
+                if (bMoveOrRotate)
+                {
+                    if (this.funcOnMoveProc != null) this.funcOnMoveProc();
                 }
             }
 

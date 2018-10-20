@@ -52,6 +52,7 @@ namespace nangka
             void Cancel(bool bHide);
             void ChangeMode();
             Transform GetRootCanvasTransform();
+            void FlashWallState();
 
         } //interface IEntityMapEditorConsole
 
@@ -82,6 +83,7 @@ namespace nangka
             private GameObject refObjNaviWindow;
             private GameObject refObjMainConsole;
             private GameObject refObjStateWindow;
+            private GameObject refObjWallStateWindow;
 
             private MAIN_CONSOLE_ITEM _selectItem;
             private MAIN_CONSOLE_ITEM _decidedItem;
@@ -94,10 +96,18 @@ namespace nangka
             private bool _bThroughWall;
             private bool _bBothSideChangeWall;
 
+
             public interface IMapDataAccessor
             {
                 void ThroughWall(bool bThrough);
                 bool ChangeWall(int x, int y, Direction dir, bool bBothSide);
+                EntityMapData.WALL_STATE GetWallState(int x, int y, Direction dir);
+            }
+
+            public interface IDungeonAccessor
+            {
+                void SetOnMoveProc(EntityDungeon.OnMoveProc func);
+                void ResetOnMoveProc();
             }
 
 
@@ -152,6 +162,7 @@ namespace nangka
                 this.refObjNaviWindow = component.objectTable[0];
                 this.refObjMainConsole = component.objectTable[1];
                 this.refObjStateWindow = component.objectTable[2];
+                this.refObjWallStateWindow = component.objectTable[3];
 
                 this._mode = CONSOLE_MODE.HIDDEN;
                 this._tempMode = CONSOLE_MODE.HIDDEN;
@@ -168,6 +179,10 @@ namespace nangka
 
                 this._bBothSideChangeWall = true;
                 this.FlashBothSideChangeWall();
+
+                IEntityDungeon iDungeon = Utility.GetIEntityDungeon();
+                IDungeonAccessor acc = (IDungeonAccessor)(iDungeon.GetOwnEntity());
+                acc.SetOnMoveProc(this.OnMoveProc);
 
                 this._bReadyLogic = true;
                 yield return null;
@@ -200,6 +215,7 @@ namespace nangka
                 else if (Input.GetKeyDown(KeyCode.Return))
                 {
                     this.ChangeWall();
+                    this.FlashWallState();
                 }
             }
 
@@ -307,26 +323,62 @@ namespace nangka
 
                 if (bChanged)
                 {
-                    int dx = 0;
-                    int dy = 0;
-                    Direction dir = iPlayerData.GetDir();
-
-                    this.FlashBlock(dx, dy, dir);
-
-                    if (this._bBothSideChangeWall)
-                    {
-                        switch (dir)
-                        {
-                            case Direction.NORTH: --dy; break;
-                            case Direction.SOUTH: ++dy; break;
-                            case Direction.EAST: ++dx; break;
-                            case Direction.WEST: --dx; break;
-                            default: break;
-                        }
-                        dir = Utility.GetOppositeDirection(dir);
-                        this.FlashBlock(dx, dy, dir);
-                    }
+                    this.FlashBlock(0, 0, iPlayerData.GetDir());
+                    if (this._bBothSideChangeWall) this.FlashAdvanceBlock();
                 }
+            }
+
+            public void FlashWallState()
+            {
+                IEntityMapData iMapData = Utility.GetIEntityMapData();
+                IMapDataAccessor acc = (IMapDataAccessor)(iMapData.GetOwnEntity());
+
+                IEntityPlayerData iPlayerData = Utility.GetIEntityPlayerData();
+                EntityMapData.WALL_STATE state = acc.GetWallState(iPlayerData.GetX(), iPlayerData.GetY(), iPlayerData.GetDir());
+
+                this.SetWallState(state);
+            }
+
+            private void SetWallState(EntityMapData.WALL_STATE state)
+            {
+                bool bWall = false;
+                bool bCollision = false;
+                switch (state)
+                {
+                    case EntityMapData.WALL_STATE.WALL: bWall = true; bCollision = true; break;
+                    case EntityMapData.WALL_STATE.WALL_WITHOUT_COLLISION: bWall = true; break;
+                    case EntityMapData.WALL_STATE.NO_WALL_WITH_COLLISION: bCollision = true; break;
+                    default: break;
+                }
+
+                var component = this.refObjWallStateWindow.GetComponent<ObjectTable>();
+                var tempComp = component.objectTable[0].GetComponent<ObjectTable>();
+                Text textWall = tempComp.objectTable[0].GetComponent<Text>();
+
+                tempComp = component.objectTable[1].GetComponent<ObjectTable>();
+                Text textCollision = tempComp.objectTable[0].GetComponent<Text>();
+
+                textWall.text = "Wall " + (bWall ? "ON" : "OFF");
+                textCollision.text = "Collision " + (bCollision ? "ON" : "OFF");
+            }
+
+            private void FlashAdvanceBlock()
+            {
+                IEntityPlayerData iPlayerData = Utility.GetIEntityPlayerData();
+                Direction dir = iPlayerData.GetDir();
+
+                int dx = 0;
+                int dy = 0;
+                switch (dir)
+                {
+                    case Direction.NORTH: --dy; break;
+                    case Direction.SOUTH: ++dy; break;
+                    case Direction.EAST: ++dx; break;
+                    case Direction.WEST: --dx; break;
+                    default: break;
+                }
+
+                this.FlashBlock(dx, dy, Utility.GetOppositeDirection(dir));
             }
 
             private void FlashBlock(int dx, int dy, Direction dir)
@@ -342,6 +394,11 @@ namespace nangka
                 // MiniMap の更新
                 IEntityMiniMap iMiniMap = Utility.GetIEntityMiniMap();
                 iMiniMap.Flash(iMapData, iPlayerData.GetX() + dx, iPlayerData.GetY() + dy, true);
+            }
+
+            private void OnMoveProc()
+            {
+                this.FlashWallState();
             }
 
             //------------------------------------------------------------------
@@ -417,12 +474,16 @@ namespace nangka
             {
                 this.refObjNaviWindow.SetActive(false);
                 this.refObjMainConsole.SetActive(true);
+                this.refObjWallStateWindow.SetActive(false);
             }
 
             private void ChangeModeProc_MainToHidden()
             {
                 this.refObjNaviWindow.SetActive(this._bShowNavi);
                 this.refObjMainConsole.SetActive(false);
+
+                this.refObjWallStateWindow.SetActive(true);
+                this.FlashWallState();
             }
 
             private void ChangeModeProc_DecidedToMain()

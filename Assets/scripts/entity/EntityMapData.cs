@@ -117,6 +117,7 @@ namespace nangka
 
             } //interface IMapRawDataAccessor
 
+
             //------------------------------------------------------------------
             // 準備処理関連変数
             //------------------------------------------------------------------
@@ -256,11 +257,24 @@ namespace nangka
             // データ設定メソッド（EntityMapEditorConsole用）
             //------------------------------------------------------------------
 
+            public enum WALL_STATE : int
+            {
+                NO_WALL,                    // 壁なし(当たり判定なし)
+                WALL,                       // 壁あり(当たり判定あり)
+                WALL_WITHOUT_COLLISION,     // 壁あり(当たり判定なし)
+                NO_WALL_WITH_COLLISION,     // 壁なし(当たり判定あり)
+
+                MAX
+            } //enum WALL_STATE
+
             void EntityMapEditorConsole.IMapDataAccessor.ThroughWall(bool bThrough)
             {
                 this._bThroughWall = bThrough;
             }
 
+            // 以下の順で切り替えていく
+            // 壁(当たり判定あり)→壁(当たり判定なし)→壁なし(当たり判定あり)→壁なし(当たり判定なし)
+            // bBothSide = true のときは、両サイドに対して上記切替え処理を行う
             bool EntityMapEditorConsole.IMapDataAccessor.ChangeWall(int x, int y, Direction dir, bool bBothSide)
             {
                 bool bChanged = ((this.IsOutOfRange(x, y) == false) && this.CheckMoveInRange(x, y, dir));
@@ -278,10 +292,42 @@ namespace nangka
                 return bChanged;
             }
 
+            WALL_STATE EntityMapEditorConsole.IMapDataAccessor.GetWallState(int x, int y, Direction dir)
+            {
+                WALL_STATE state = WALL_STATE.NO_WALL;
+
+                if (this.IsOutOfRange(x, y) == false)
+                {
+                    IMapRawDataAccessor acc = (IMapRawDataAccessor)this._data;
+                    BlockData[] table = acc.GetBlockData();
+                    state = this.GetWallState(this.GetBlock(table, x, y), dir);
+                }
+                return state;
+            }
+
             private void ChangeWall(BlockData data, Direction dir)
             {
-                data.idTip[(int)dir] = (byte)((data.idTip[(int)dir] == 0) ? 2 : 0);
-                data.collision ^= (uint)(1 << (int)dir);
+                WALL_STATE state = this.GetNextWallState(this.GetWallState(data, dir));
+                this.SetWall(data, dir, state);
+            }
+
+            private void SetWall(BlockData data, Direction dir, WALL_STATE state)
+            {
+                byte idTip = 0;
+                bool bCollision = false;
+
+                switch (state)
+                {
+                    case WALL_STATE.WALL: idTip = 2; bCollision = true; break;
+                    case WALL_STATE.WALL_WITHOUT_COLLISION: idTip = 2; break;
+                    case WALL_STATE.NO_WALL_WITH_COLLISION: bCollision = true; break;
+                    default: break;
+                }
+
+                data.idTip[(int)dir] = idTip;
+                data.collision = bCollision
+                    ? (uint)(data.collision | (uint)(1 << (int)dir))
+                    : (uint)(data.collision ^ (uint)(1 << (int)dir));
             }
 
             private BlockData GetBlock(BlockData[] table, int x, int y)
@@ -303,6 +349,20 @@ namespace nangka
                 return this.GetBlock(table, x, y);
             }
 
+            private WALL_STATE GetWallState(BlockData data, Direction dir)
+            {
+                byte idTip = data.idTip[(int)dir];
+                bool bCollision = ((data.collision & (uint)(1 << (int)dir)) != 0);
+
+                return (idTip == 0)
+                    ? (bCollision ? WALL_STATE.NO_WALL_WITH_COLLISION : WALL_STATE.NO_WALL)
+                    : (bCollision ? WALL_STATE.WALL : WALL_STATE.WALL_WITHOUT_COLLISION);
+            }
+
+            private WALL_STATE GetNextWallState(WALL_STATE state)
+            {
+                return (WALL_STATE)(((int)state + 1) % (int)WALL_STATE.MAX);
+            }
 
 
             //------------------------------------------------------------------

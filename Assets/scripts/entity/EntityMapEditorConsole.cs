@@ -36,6 +36,8 @@ namespace nangka
             WALL_THROUGH_SWITCH,    // 状態ウィンドウの表示切替
             BOTH_SIDE_SWITCH,       // 壁の生成／破棄を両面で行うかどうかの切替
             TEXTURE_SETTING,        // テクスチャ設定
+            MAPFILE_SETTING,        // マップファイル名の設定
+            MAPTITLE_SETTING,       // マップ名の設定
             RETURN_TO_DEV,          // 開発エントランスへ戻る
 
             MAX,
@@ -54,6 +56,12 @@ namespace nangka
             void ChangeMode();
             Transform GetRootCanvasTransform();
             void FlashWallState();
+
+            string GetMapFileName();
+            void SetMapFileName(string fileName);
+
+            string GetMapTitle();
+            void SetMapTitle(string title);
 
         } //interface IEntityMapEditorConsole
 
@@ -96,6 +104,34 @@ namespace nangka
             private bool _bShowNavi;
             private bool _bThroughWall;
             private bool _bBothSideChangeWall;
+
+            private string _nameMapFile;
+            public string GetMapFileName() { return this._nameMapFile; }
+            public void SetMapFileName(string fileName)
+            {
+                this._nameMapFile = fileName;
+
+                if (this.refObjStateWindow == null) return;
+
+                var component = this.refObjStateWindow.GetComponent<ObjectTable>();
+                component = component.objectTable[3].GetComponent<ObjectTable>();
+                Text objText = component.objectTable[0].GetComponent<Text>();
+                objText.text = "MapFile: " + (((fileName == null) || (fileName == "")) ? "(未設定)" : fileName);
+            }
+
+            private string _nameMapTitle;
+            public string GetMapTitle() { return this._nameMapTitle; }
+            public void SetMapTitle(string title)
+            {
+                this._nameMapTitle = title;
+
+                if (this.refObjStateWindow == null) return;
+
+                var component = this.refObjStateWindow.GetComponent<ObjectTable>();
+                component = component.objectTable[4].GetComponent<ObjectTable>();
+                Text objText = component.objectTable[0].GetComponent<Text>();
+                objText.text = "MapTitle: " + ((title == null) ? "" : title);
+            }
 
 
             public interface IMapDataAccessor

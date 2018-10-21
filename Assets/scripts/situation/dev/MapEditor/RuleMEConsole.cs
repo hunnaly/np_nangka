@@ -146,6 +146,7 @@ namespace nangka
                         IEntityMapEditorConsole iMeConsole = Utility.GetIEntityMapEditorConsole();
                         iMeConsole.ChangeMode();
 
+                        yield return Utility.RegistEntityCommonListDialog();
                         yield return Utility.RegistEntityLoadMap();
 
                         // 次の Situation を登録
@@ -153,6 +154,80 @@ namespace nangka
                     }
 
                 } //class RuleMEConsoleToLoadMap
+
+
+                //------------------------------------------------------------------
+                // RuleMEConsoleToInputMapFile
+                //------------------------------------------------------------------
+                public class RuleMEConsoleToInputMapFile : RuleBase, INpRule
+                {
+                    public bool CheckRule()
+                    {
+                        IEntityMapEditorConsole iMeConsole = Utility.GetIEntityMapEditorConsole();
+                        bool bDecided = (iMeConsole.GetDetectedMode() == CONSOLE_MODE.DECIDED);
+                        bool bSelect = (iMeConsole.GetDecidedItem() == MAIN_CONSOLE_ITEM.MAPFILE_SETTING);
+
+                        return (bDecided && bSelect);
+                    }
+
+                    public void ReadyNextSituation()
+                    {
+                        Debug.Log("RuleMEConsoleToInputMapFile.ReadyNextSituation()");
+                        Utility.StartCoroutine(this.Ready());
+                    }
+
+                    public void CleanUpForce() { }
+
+                    private IEnumerator Ready()
+                    {
+                        IEntityMapEditorConsole iMeConsole = Utility.GetIEntityMapEditorConsole();
+                        iMeConsole.ChangeMode();
+
+                        yield return Utility.RegistEntityCommonInputDialog();
+                        yield return Utility.RegistEntityMapFileSetting();
+
+                        // 次の Situation を登録
+                        this.nextSituation = NpSituation.Create<SituationInputMapFile>();
+                    }
+
+                } //class RuleMEConsoleToInputMapFile
+
+
+                //------------------------------------------------------------------
+                // RuleMEConsoleToInputMapTitle
+                //------------------------------------------------------------------
+                public class RuleMEConsoleToInputMapTitle : RuleBase, INpRule
+                {
+                    public bool CheckRule()
+                    {
+                        IEntityMapEditorConsole iMeConsole = Utility.GetIEntityMapEditorConsole();
+                        bool bDecided = (iMeConsole.GetDetectedMode() == CONSOLE_MODE.DECIDED);
+                        bool bSelect = (iMeConsole.GetDecidedItem() == MAIN_CONSOLE_ITEM.MAPTITLE_SETTING);
+
+                        return (bDecided && bSelect);
+                    }
+
+                    public void ReadyNextSituation()
+                    {
+                        Debug.Log("RuleMEConsoleToInputMapTitle.ReadyNextSituation()");
+                        Utility.StartCoroutine(this.Ready());
+                    }
+
+                    public void CleanUpForce() { }
+
+                    private IEnumerator Ready()
+                    {
+                        IEntityMapEditorConsole iMeConsole = Utility.GetIEntityMapEditorConsole();
+                        iMeConsole.ChangeMode();
+
+                        yield return Utility.RegistEntityCommonInputDialog();
+                        yield return Utility.RegistEntityMapTitleSetting();
+
+                        // 次の Situation を登録
+                        this.nextSituation = NpSituation.Create<SituationInputMapTitle>();
+                    }
+
+                } //class RuleMEConsoleToInputMapTitle
 
             } //namespace mapeditor
         } //namespace dev

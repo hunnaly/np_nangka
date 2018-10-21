@@ -1,4 +1,6 @@
-﻿using System.Collections;
+﻿using System;
+using System.IO;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -42,7 +44,7 @@ namespace nangka
             private bool _bReadyLogic;
             public bool IsReadyLogic() { return this._bReadyLogic; }
 
-            private CommonDialog dialog;
+            private CommonListDialog dialog;
 
             private EntityLoadMap.RESULT _result;
             public EntityLoadMap.RESULT GetResult() { return this._result; }
@@ -56,14 +58,15 @@ namespace nangka
             {
                 Debug.Log("EntityLoadMap.StartProc()");
 
-                IEntityCommonDialog iDialog = Utility.GetIEntityCommonDialog();
-                this.dialog = iDialog.Create();
+                IEntityCommonListDialog iDialog = Utility.GetIEntityCommonListDialog();
+                this.dialog = iDialog.Create(5, "Map List");
 
                 IEntityMapEditorConsole iMEConsole = Utility.GetIEntityMapEditorConsole();
                 this.dialog.SetParent(iMEConsole.GetRootCanvasTransform());
-                this.dialog.SetKeyCB(KeyCode.Return, this.DialogCB_OK);
-                this.dialog.SetKeyCB(KeyCode.RightShift, this.DialogCB_Cancel);
-                this.dialog.SetText("マップをロードします。よろしいですか？\n\n  [OK(Return)]   [Cancel(Right-Shift)]");
+                this.dialog.SetEventCB(CommonListDialog.RESULT.OK, new CommonListDialog.EventKeyInfo(KeyCode.Return, this.DialogCB_OK));
+                this.dialog.SetEventCB(CommonListDialog.RESULT.CANCEL, new CommonListDialog.EventKeyInfo(KeyCode.RightShift, this.DialogCB_Cancel));
+                this.EnumerateMapFile(this.dialog);
+                this.dialog.FlashItem();
                 this.dialog.Show();
 
                 this._result = EntityLoadMap.RESULT.NONE;
@@ -84,38 +87,55 @@ namespace nangka
             {
                 if (this.dialog != null)
                 {
-                    IEntityCommonDialog iDialog = Utility.GetIEntityCommonDialog();
+                    IEntityCommonListDialog iDialog = Utility.GetIEntityCommonListDialog();
                     iDialog.Release(this.dialog);
                     this.dialog = null;
                 }
             }
 
+            //------------------------------------------------------------------
+            // ファイル一覧
+            //------------------------------------------------------------------
+
+            private void EnumerateMapFile(CommonListDialog dlg)
+            {
+                try
+                {
+                    var files = Directory.GetFiles(Define.GetMapFilePath(), "*", SearchOption.AllDirectories);
+
+                    foreach (string file in files)
+                    {
+                        string temp = file.TrimStart(Define.GetMapFilePath().ToCharArray());
+                        dlg.AddItem(temp.Substring(1, temp.Length-1));
+                    }
+                }
+                catch
+                {
+                }
+            }
 
             //------------------------------------------------------------------
             // Dialog コールバック
             //------------------------------------------------------------------
 
-            private void DialogCB_OK()
+            private void DialogCB_OK(int idx, string text)
             {
-                IEntityCommonDialog iDialog = Utility.GetIEntityCommonDialog();
-                iDialog.Release(this.dialog);
-                this.dialog = null;
-
-                Utility.StartCoroutine(this.Recreate());
+                if (text == null) return;
+                Utility.StartCoroutine(this.Recreate(text));
             }
 
-            private void DialogCB_Cancel()
+            private void DialogCB_Cancel(int idx, string text)
             {
-                IEntityCommonDialog iDialog = Utility.GetIEntityCommonDialog();
+                IEntityCommonListDialog iDialog = Utility.GetIEntityCommonListDialog();
                 iDialog.Release(this.dialog);
                 this.dialog = null;
 
                 this._result = EntityLoadMap.RESULT.CANCEL;
             }
 
-            private IEnumerator Recreate()
+            private IEnumerator Recreate(string mapFileName)
             {
-                IEntityCommonDialog iDialog = Utility.GetIEntityCommonDialog();
+                IEntityCommonListDialog iDialog = Utility.GetIEntityCommonListDialog();
                 iDialog.Release(this.dialog);
                 this.dialog = null;
 
@@ -124,11 +144,16 @@ namespace nangka
 
                 yield return Utility.RegistEntityRecreator();
                 IEntityRecreator iRecreator = Utility.GetIEntityRecreator();
-                iRecreator.Run(EntityRecreator.MODE_PLAYER.EMPTY_MMOPEN, EntityRecreator.MODE_MAP.FILE, "map_test.dat");
+                iRecreator.Run(EntityRecreator.MODE_PLAYER.EMPTY_MMOPEN, EntityRecreator.MODE_MAP.FILE, mapFileName);
                 if (iRecreator.IsFinished() == false) yield return null;
                 iRecreator.Terminate();
 
                 iDungeon.Restart();
+
+                IEntityMapData iMapData = Utility.GetIEntityMapData();
+                IEntityMapEditorConsole iMEConsole = Utility.GetIEntityMapEditorConsole();
+                iMEConsole.SetMapFileName(mapFileName);
+                iMEConsole.SetMapTitle(iMapData.GetName());
 
                 this._result = EntityLoadMap.RESULT.SUCCESS;
             }

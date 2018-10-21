@@ -84,6 +84,11 @@ namespace nangka
 
                     yield return Utility.RegistEntityCommonDialog();
                     yield return Utility.RegistEntityMapEditorConsole();
+
+                    IEntityMapData iMapData = Utility.GetIEntityMapData();
+                    IEntityMapEditorConsole iMEConsole = Utility.GetIEntityMapEditorConsole();
+                    iMEConsole.SetMapFileName(null);
+                    iMEConsole.SetMapTitle(iMapData.GetName());
                 }
             }
 

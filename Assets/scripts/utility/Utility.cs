@@ -197,6 +197,12 @@ namespace nangka {
             public static IEnumerator RegistEntityCommonDialog() { yield return RegistEntity<EntityCommonDialog, IEntityCommonDialog>(Define.ENTITY_CNAME_COMMON_DIALOG); }
             public static IEntityCommonDialog GetIEntityCommonDialog() { return GetInterface<EntityCommonDialog, IEntityCommonDialog>(Define.ENTITY_CNAME_COMMON_DIALOG); }
 
+            public static IEnumerator RegistEntityCommonListDialog() { yield return RegistEntity<EntityCommonListDialog, IEntityCommonListDialog>(Define.ENTITY_CNAME_COMMON_LIST_DIALOG); }
+            public static IEntityCommonListDialog GetIEntityCommonListDialog() { return GetInterface<EntityCommonListDialog, IEntityCommonListDialog>(Define.ENTITY_CNAME_COMMON_LIST_DIALOG); }
+
+            public static IEnumerator RegistEntityCommonInputDialog() { yield return RegistEntity<EntityCommonInputDialog, IEntityCommonInputDialog>(Define.ENTITY_CNAME_COMMON_INPUT_DIALOG); }
+            public static IEntityCommonInputDialog GetIEntityCommonInputDialog() { return GetInterface<EntityCommonInputDialog, IEntityCommonInputDialog>(Define.ENTITY_CNAME_COMMON_INPUT_DIALOG); }
+
             public static IEnumerator RegistEntityNewMap() { yield return RegistEntity<EntityNewMap, IEntityNewMap>(Define.ENTITY_CNAME_NEW_MAP); }
             public static IEntityNewMap GetIEntityNewMap() { return GetInterface<EntityNewMap, IEntityNewMap>(Define.ENTITY_CNAME_NEW_MAP); }
 
@@ -205,6 +211,12 @@ namespace nangka {
 
             public static IEnumerator RegistEntityLoadMap() { yield return RegistEntity<EntityLoadMap, IEntityLoadMap>(Define.ENTITY_CNAME_LOAD_MAP); }
             public static IEntityLoadMap GetIEntityLoadMap() { return GetInterface<EntityLoadMap, IEntityLoadMap>(Define.ENTITY_CNAME_LOAD_MAP); }
+
+            public static IEnumerator RegistEntityMapFileSetting() { yield return RegistEntity<EntityMapFileSetting, IEntityMapFileSetting>(Define.ENTITY_CNAME_MAP_FILE_SETTING); }
+            public static IEntityMapFileSetting GetIEntityMapFileSetting() { return GetInterface<EntityMapFileSetting, IEntityMapFileSetting>(Define.ENTITY_CNAME_MAP_FILE_SETTING); }
+
+            public static IEnumerator RegistEntityMapTitleSetting() { yield return RegistEntity<EntityMapTitleSetting, IEntityMapTitleSetting>(Define.ENTITY_CNAME_MAP_TITLE_SETTING); }
+            public static IEntityMapTitleSetting GetIEntityMapTitleSetting() { return GetInterface<EntityMapTitleSetting, IEntityMapTitleSetting>(Define.ENTITY_CNAME_MAP_TITLE_SETTING); }
         }
 
     } //namespace utility

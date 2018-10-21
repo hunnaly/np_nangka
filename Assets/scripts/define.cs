@@ -38,9 +38,13 @@ namespace nangka
         public static string ENTITY_CNAME_DEV_ENTRANCE = ENTITY_PATH + "EntityDevEntrance";
         public static string ENTITY_CNAME_MAPEDITOR_CONSOLE = ENTITY_PATH + "EntityMapEditorConsole";
         public static string ENTITY_CNAME_COMMON_DIALOG = ENTITY_PATH + "EntityCommonDialog";
+        public static string ENTITY_CNAME_COMMON_LIST_DIALOG = ENTITY_PATH + "EntityCommonListDialog";
+        public static string ENTITY_CNAME_COMMON_INPUT_DIALOG = ENTITY_PATH + "EntityCommonInputDialog";
         public static string ENTITY_CNAME_NEW_MAP = ENTITY_PATH + "EntityNewMap";
         public static string ENTITY_CNAME_SAVE_MAP = ENTITY_PATH + "EntitySaveMap";
         public static string ENTITY_CNAME_LOAD_MAP = ENTITY_PATH + "EntityLoadMap";
+        public static string ENTITY_CNAME_MAP_FILE_SETTING = ENTITY_PATH + "EntityMapFileSetting";
+        public static string ENTITY_CNAME_MAP_TITLE_SETTING = ENTITY_PATH + "EntityMapTitleSetting";
 
 
         //----------------------------------------------------------------
@@ -49,6 +53,9 @@ namespace nangka
         public static string RES_PATH_PREFAB_WALL = "Prefabs/Wall";
         public static string RES_PATH_PREFAB_ARROW = "Prefabs/Arrow";
         public static string RES_PATH_PREFAB_COMMON_DIALOG = "Prefabs/CommonDialog";
+        public static string RES_PATH_PREFAB_COMMON_LIST_DIALOG = "Prefabs/CommonList";
+        public static string RES_PATH_PREFAB_COMMON_ITEM = "Prefabs/CommonItem";
+        public static string RES_PATH_PREFAB_COMMON_INPUT_DIALOG = "Prefabs/CommonInputDialog";
 
 
         //----------------------------------------------------------------

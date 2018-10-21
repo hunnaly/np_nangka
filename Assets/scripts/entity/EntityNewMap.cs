@@ -127,6 +127,11 @@ namespace nangka
 
                 iDungeon.Restart();
 
+                IEntityMapData iMapData = Utility.GetIEntityMapData();
+                IEntityMapEditorConsole iMEConsole = Utility.GetIEntityMapEditorConsole();
+                iMEConsole.SetMapFileName(null);
+                iMEConsole.SetMapTitle(iMapData.GetName());
+
                 this._result = EntityNewMap.RESULT.SUCCESS;
             }
 

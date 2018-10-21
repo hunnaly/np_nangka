@@ -17,25 +17,25 @@ namespace nangka
             {
 
                 //------------------------------------------------------------------
-                // RuleLoadMapToMapEditor
+                // RuleInputMapTitleToMapEditor
                 //------------------------------------------------------------------
-                public class RuleLoadMapToMapEditor : RuleBase, INpRule
+                public class RuleInputMapTitleToMapEditor : RuleBase, INpRule
                 {
                     public bool CheckRule()
                     {
-                        IEntityLoadMap iLoadMap = Utility.GetIEntityLoadMap();
-                        return (iLoadMap.GetResult() == EntityLoadMap.RESULT.SUCCESS);
+                        IEntityMapTitleSetting iSetting = Utility.GetIEntityMapTitleSetting();
+                        return (iSetting.GetResult() == EntityMapTitleSetting.RESULT.OK);
                     }
 
                     public void ReadyNextSituation()
                     {
-                        Debug.Log("RuleLoadMapToMapEditor.ReadyNextSituation()");
+                        Debug.Log("RuleInputMapTitleToMapEditor.ReadyNextSituation()");
 
-                        IEntityCommonListDialog iListDialog = Utility.GetIEntityCommonListDialog();
-                        iListDialog.Terminate();
+                        IEntityCommonInputDialog iInputDialog = Utility.GetIEntityCommonInputDialog();
+                        iInputDialog.Terminate();
 
-                        IEntityLoadMap iLoadMap = Utility.GetIEntityLoadMap();
-                        iLoadMap.Terminate();
+                        IEntityMapTitleSetting iSetting = Utility.GetIEntityMapTitleSetting();
+                        iSetting.Terminate();
 
                         IEntityMapEditorConsole iMEConsole = Utility.GetIEntityMapEditorConsole();
                         iMEConsole.Cancel(true);
@@ -50,29 +50,29 @@ namespace nangka
 
                     public void CleanUpForce() { }
 
-                } //class RuleLoadMapToMapEditor
+                } //class RuleInputMapFileToMapEditor
 
 
                 //------------------------------------------------------------------
-                // RuleLoadMapToMEConsole
+                // RuleInputMapFileToMEConsole
                 //------------------------------------------------------------------
-                public class RuleLoadMapToMEConsole : RuleBase, INpRule
+                public class RuleInputMapTitleToMEConsole : RuleBase, INpRule
                 {
                     public bool CheckRule()
                     {
-                        IEntityLoadMap iLoadMap = Utility.GetIEntityLoadMap();
-                        return (iLoadMap.GetResult() == EntityLoadMap.RESULT.CANCEL);
+                        IEntityMapTitleSetting iSetting = Utility.GetIEntityMapTitleSetting();
+                        return (iSetting.GetResult() == EntityMapTitleSetting.RESULT.CANCEL);
                     }
 
                     public void ReadyNextSituation()
                     {
-                        Debug.Log("RuleLoadMapToMEConsole.ReadyNextSituation()");
+                        Debug.Log("RuleInputMapTitleToMEConsole.ReadyNextSituation()");
 
-                        IEntityCommonListDialog iListDialog = Utility.GetIEntityCommonListDialog();
-                        iListDialog.Terminate();
+                        IEntityCommonInputDialog iInputDialog = Utility.GetIEntityCommonInputDialog();
+                        iInputDialog.Terminate();
 
-                        IEntityLoadMap iLoadMap = Utility.GetIEntityLoadMap();
-                        iLoadMap.Terminate();
+                        IEntityMapTitleSetting iSetting = Utility.GetIEntityMapTitleSetting();
+                        iSetting.Terminate();
 
                         IEntityMapEditorConsole iMEConsole = Utility.GetIEntityMapEditorConsole();
                         iMEConsole.Cancel(false);
@@ -83,7 +83,7 @@ namespace nangka
 
                     public void CleanUpForce() { }
 
-                } //class RuleLoadMapToMEConsole
+                } //class RuleInputMapTitleToMEConsole
 
             } //namespace mapeditor
         } //namespace dev

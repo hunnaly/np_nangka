@@ -18,6 +18,8 @@ namespace nangka
                         this.CreateRule<RuleMEConsoleToNewMap>();
                         this.CreateRule<RuleMEConsoleToSaveMap>();
                         this.CreateRule<RuleMEConsoleToLoadMap>();
+                        this.CreateRule<RuleMEConsoleToInputMapFile>();
+                        this.CreateRule<RuleMEConsoleToInputMapTitle>();
                         return true;
                     }
 

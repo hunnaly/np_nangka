@@ -123,10 +123,18 @@ namespace nangka
 
             private bool SaveMapData()
             {
-                IEntityMapData iMapData = Utility.GetIEntityMapData();
-                IMapDataAccessor acc = (IMapDataAccessor)(iMapData.GetOwnEntity());
-                acc.Save("map_test.dat");
-                return true;
+                IEntityMapEditorConsole iMEConsole = Utility.GetIEntityMapEditorConsole();
+                string fileName = iMEConsole.GetMapFileName();
+
+                bool b = false;
+                if ((fileName != null) && (fileName != ""))
+                {
+                    IEntityMapData iMapData = Utility.GetIEntityMapData();
+                    IMapDataAccessor acc = (IMapDataAccessor)(iMapData.GetOwnEntity());
+                    acc.Save(fileName);
+                    b = true;
+                }
+                return b;
             }
 
             private void CreateResultDialog(bool bSuccess)

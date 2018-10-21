@@ -398,6 +398,9 @@ namespace nangka
                 recreator.AddTexture(3, Define.RES_PATH_TEXTURE_WALL_DOOR, "Door");
                 recreator.AddTexture(4, Define.RES_PATH_TEXTURE_WALL_DOOR_LOCK, "Locked Door");
                 recreator.AddTexture(5, Define.RES_PATH_TEXTURE_WALL_BREAKABLE_WALL, "Breakable Wall");
+                recreator.AddTexture(6, Define.RES_PATH_TEXTURE_WALL_BREAKABLE_WALL_FIRE, "Breakable Wall-Fire");
+                recreator.AddTexture(7, Define.RES_PATH_TEXTURE_WALL_BREAKABLE_WALL_ICE, "Breakable Wall-Ice");
+                recreator.AddTexture(8, Define.RES_PATH_TEXTURE_WALL_BREAKABLE_WALL_THUNDER, "Breakable Wall-Thunder");
             }
 
             private EntityMapData.BlockData DNewBlock(
